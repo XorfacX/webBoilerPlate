@@ -1,0 +1,275 @@
+# This folder holds dependencies needed to build and test the project
+# Therefore this folder is used only in configuration stage
+# =========================================================
+
+import sys;
+import os;
+import stat;
+import shutil;
+import urllib;
+import zipfile;
+import shlex,subprocess;
+import platform;
+
+ENGINES = 'dojo'
+BUILDTYPE = 'debug release'
+PLATFORMS = 'android local chrome owa' #list of supported platforms
+
+#> http://dojotoolkit.org/
+DOJO_VERSION = "1.9.2"
+DOJO_URL = "http://download.dojotoolkit.org/release-" + DOJO_VERSION + "/dojo-release-" + DOJO_VERSION+ "-src.zip"
+DOJO_FILENAME = "dojo-release-" + DOJO_VERSION + "-src.zip"
+DOJO_UNZIP = "dojo-release-" + DOJO_VERSION + "-src"
+DOJO_PROFILE = "dojo.profile.js"
+
+#> https://raw.github.com/evilstreak/markdown-js/master/lib/markdown.js
+MARKDOWN_PARSER_FN="Markdown.Converter.js"
+MARKDOWN_PARSER_URL="http://pagedown.googlecode.com/hg/" + MARKDOWN_PARSER_FN
+
+#> http://cordova.apache.org/
+CORDOVA_FN="cordova-2.8.0-src.zip"
+CORDOVA_URL="https://www.apache.org/dist/cordova/" + CORDOVA_FN
+CORDOVA_UNZIP="cordova-2.8.0"
+CORDOVA_JAR="cordova-2.8.0.jar"
+CORDOVA_ANDROID_FN=os.path.join( CORDOVA_UNZIP,"cordova-android.zip" )
+CORDOVA_ANDROID_UNZIP=os.path.join(CORDOVA_UNZIP,"android")
+
+#> http://commons.apache.org/codec/
+APACHE_CODEC_FN="commons-codec-1.8-bin.zip"
+APACHE_CODEC_URL="http://mirror.apache-kr.org/commons/codec/binaries/" + APACHE_CODEC_FN
+APACHE_CODEC_UNZIP="commons-codec-1.8"
+APACHE_CODEC_JAR="commons-codec-1.8.jar"
+
+#> http://pieroxy.net/blog/pages/lz-string/index.html
+LZSTRING_FILENAME="lz-string-1.3.3.js"
+LZSTRING_URL="https://raw.github.com/XorfacX/lz-string/master/libs/" + LZSTRING_FILENAME
+
+top = '.'
+out = 'wbuild'
+
+
+def options(opt):
+	""" Defines which option can be used for this project """
+	gropt = opt.get_option_group('configure options')
+	gropt.add_option('-e', '--engine', action='store', default='dojo', help='engine to configure the build for [default: \'dojo\']', dest='engine')
+	gropt.add_option('-p', '--platform', action='store', default='local', help='platform to build for [default: \'local\']', dest='platform')
+
+def configure(conf):
+	conf.check_waf_version(mini='1.6.3')
+	
+	#checking options		
+	if conf.options.engine not in ENGINES:
+	  conf.fatal("the --engine options is not recognized. It must be one of : " + ENGINES)  
+	conf.env.ENGINE=conf.options.engine #setting up global variable
+
+	if conf.options.platform not in PLATFORMS :
+	  conf.fatal("The platform " + conf.options.platform + " is unknown. Please use one of " + PLATFORMS)
+	conf.env.PLATFORM=conf.options.platform #setting up global variable
+	
+
+  #MACROS
+	def DL_web(url, filename) :
+		""" Download url to filename if --download and needed """
+		conf.start_msg("Checking for " + filename)
+		dldnode = conf.path.find_node(filename)
+		if dldnode is None:
+			conf.end_msg("failed", color="RED")
+			if conf.options.download == True :
+				def progress_report(nb_block, blocksize, totalsize):
+					reportstr = '{}% of {} Bytes'.format(nb_block * blocksize * 100 / totalsize, totalsize)
+					sys.stdout.write("\rDownloading " + filename +" : ")
+					sys.stdout.write(reportstr)
+					sys.stdout.flush();
+				sys.stdout.write("Downloading " + filename + " : ... ")
+				urllib.urlretrieve(url,conf.path.abspath()+ os.sep + filename,progress_report)
+				sys.stdout.write("\rDownloading " + filename + " : 100% \n")
+				conf.end_msg("ok", color="GREEN")
+				urllib.urlcleanup();
+				dldnode = conf.path.find_node(filename)
+				if dldnode is None : conf.fatal("ERROR : " + filename + " not found.")
+			else : conf.fatal(filename + " is not found or invalid.\nPlease run 'waf configure --download'")
+		else : conf.end_msg("ok", color="GREEN")
+		return dldnode
+	
+	def unzip(filename, expected_extract, specified_destination = conf.path.srcpath() ) :	
+		conf.start_msg("Checking for " + expected_extract )
+		unzipnode = conf.path.find_node(expected_extract)
+		if unzipnode is None:
+			conf.end_msg("failed", color="RED")
+			zipnode = conf.path.find_node(filename)
+			if zipnode is not None and zipfile.is_zipfile(zipnode.abspath()):
+				with zipfile.ZipFile(zipnode.abspath(),'r') as myzip:
+					conf.start_msg("Unzipping " + expected_extract)
+					myzip.debug= 1
+					myzip.extractall(specified_destination)
+					conf.end_msg("ok", color="GREEN")
+			else : 
+				conf.fatal("The zip file " + filename + " is not found or invalid.\nPlease run 'waf configure --download'")
+			unzipnode = conf.path.find_node(expected_extract)
+			if unzipnode is None : conf.fatal("ERROR : Expected " + expected_extract + " not found.")
+		else : conf.end_msg("ok", color="GREEN")
+		return unzipnode
+		
+	#download Markdown 2 html parser
+	DL_web(MARKDOWN_PARSER_URL,MARKDOWN_PARSER_FN)
+	
+	if conf.env.PLATFORM == 'android' :
+		#download cordova for mobile packaging
+		DL_web(CORDOVA_URL,CORDOVA_FN)
+		unzip(CORDOVA_FN,CORDOVA_UNZIP)
+		conf.env.CORDOVA_PATH=unzip(CORDOVA_ANDROID_FN,CORDOVA_ANDROID_UNZIP, os.path.join(conf.path.srcpath(), CORDOVA_ANDROID_UNZIP) ).relpath()
+
+		#download apache codec for mobile packaging
+		DL_web(APACHE_CODEC_URL,APACHE_CODEC_FN)
+		unzip(APACHE_CODEC_FN,APACHE_CODEC_UNZIP)
+	
+		def detect_android() :	
+			conf.start_msg("=> Android SDK tools/ should be in your PATH")
+			android_detect = subprocess.Popen(
+				"android -h",
+				stdout=subprocess.PIPE,
+				stderr=subprocess.PIPE,
+				shell=True,
+			)
+			out,err = android_detect.communicate()
+			# for unknown reason this command returns 1 on linux but 0 on windows...
+			if ( os.name == 'posix' and android_detect.returncode == 1 ) or ( os.name == 'nt' and android_detect.returncode == 0 ):
+				conf.to_log(out)
+				conf.to_log(err)	
+				conf.end_msg("ok","GREEN")
+					
+				conf.start_msg("=> Android SDK tools-platform/ should be in your PATH")
+				adb_detect = subprocess.Popen(
+					"adb version",
+					stdout=subprocess.PIPE,
+					stderr=subprocess.PIPE,
+					shell=True,
+				)
+				out,err = adb_detect.communicate()
+				if adb_detect.returncode == 0 :
+					conf.to_log(out)
+					conf.to_log(err)
+					conf.end_msg("ok","GREEN")
+					return True;
+				else :
+					conf.end_msg("failed","RED")
+					conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+			else :
+				conf.end_msg("failed","RED")
+				conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+
+		def detect_javac() :
+			conf.start_msg("=> Java JDK bin/ should be in your PATH")
+			javac_detect = subprocess.Popen(
+				"javac -version",
+				stdout=subprocess.PIPE,
+				stderr=subprocess.PIPE,
+				shell=True,
+			)
+			out,err = javac_detect.communicate()
+			if javac_detect.returncode == 0 :
+				conf.to_log(out)
+				conf.to_log(err)
+				conf.end_msg("ok","GREEN")
+				return True;
+			else :
+				conf.end_msg("failed","RED")
+				conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+			
+		def detect_ant() :
+			conf.start_msg("=> Apache ant bin/ should be in your PATH")
+			ant_detect = subprocess.Popen(
+				"ant -version",
+				stdout=subprocess.PIPE,
+				stderr=subprocess.PIPE,
+				shell=True,
+			)
+			out,err = ant_detect.communicate()
+			if ant_detect.returncode == 0 :
+				conf.to_log(out)
+				conf.to_log(err)
+				conf.end_msg("ok","GREEN")
+				return True;
+			else :
+				conf.end_msg("failed","RED")
+				conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+	
+		#on linux only : setting permissions for cordova scripts
+		if os.name == 'posix' and platform.system() == 'Linux':
+			cordovacreate=conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("bin").find_node("create")
+			if cordovacreate is None : conf.fatal("ERROR : " + CORDOVA_ANDROID_UNZIP + "/bin/create not found.")
+			os.chmod(cordovacreate.abspath(),stat.S_IXUSR | stat.S_IRUSR)	
+		#elif os.name == 'posix' and platform.system() == 'Darwin':
+		#	raise Exception("NOT IMPLEMENTED") #TODO
+		#elif os.name == 'nt' and platform.system() == 'Windows' :
+		#
+		
+		#building cordova
+		conf.start_msg("Checking for Cordova Android Jar")
+		commoncodecnode=conf.path.find_node(APACHE_CODEC_UNZIP).find_node(APACHE_CODEC_JAR)
+		if commoncodecnode is None : conf.fatal(os.path.join(APACHE_CODEC_UNZIP.relpath(),APACHE_CODEC_JAR) + " not found") 
+		cordovafmwklibs=conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("framework/libs")
+		if cordovafmwklibs is None : 
+			cordovafmwklibs=conf.path.find_node(CORDOVA_ANDROID_UNZIP).make_node("framework/libs")
+			if not os.path.exists(cordovafmwklibs.abspath()) : cordovafmwklibs.mkdir()
+
+		shutil.copy(commoncodecnode.abspath(),cordovafmwklibs.abspath())
+		#BUG : Detetion of successful copy not working ??
+		#commoncodecfmwknode = conf.path.find_node(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())))
+		#if commoncodecfmwknode is None : 
+		#	conf.fatal(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())) + " not found") 
+	
+		fmwknode = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("framework")
+		jarnode = fmwknode.find_node(CORDOVA_JAR);
+		#checking if we need to build cordova android
+		if jarnode is None :
+			conf.end_msg("failed", color="RED")
+			#detecting android tools
+			if detect_android() and detect_javac() and detect_ant():
+				conf.start_msg("=> Building Cordova Android Jar" )
+				crdv_android_build_proc = subprocess.Popen(
+					"android update project -p . -t android-17 && ant jar",
+					cwd= fmwknode.abspath(),
+					stdout=subprocess.PIPE,
+					stderr=subprocess.PIPE,
+					shell=True,
+				)
+				out,err = crdv_android_build_proc.communicate()
+				if crdv_android_build_proc.returncode == 0 :
+					conf.to_log(out)
+					conf.to_log(err)
+					#finding the jar
+					jarnode = fmwknode.find_node(CORDOVA_JAR);
+					if jarnode is None :
+						conf.fatal( "ERROR : " + CORDOVA_JAR + " not found !")
+					else :
+						conf.end_msg( jarnode.relpath(),"GREEN")
+				else :
+					conf.end_msg("failed","RED")
+					conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+		else :
+			conf.end_msg( jarnode.relpath(),"GREEN")
+	#end of android specific config
+		
+	if conf.env.ENGINE == "dojo" :
+
+		DL_web(DOJO_URL,DOJO_FILENAME)
+		dojonode = unzip(DOJO_FILENAME,DOJO_UNZIP)
+		
+		#post condition	
+		if dojonode is None: conf.fatal("The dojo toolkit was not detected and could not be downloaded. Please connect to internet and run 'waf configure' again")
+		else : conf.env.DOJOPATH = dojonode.abspath()
+	
+		#check if a profile exists
+		conf.start_msg("Checking for dojo profile")
+		profnode = conf.path.find_node(DOJO_PROFILE)
+		if profnode is None : # if not creates it
+			conf.end_msg("failed", color="RED")
+			subprocess.call(shlex.split("touch " + DOJO_PROFILE ))
+			if conf.path.find_node(DOJO_PROFILE) is None : conf.fatal("Unable to create dojo build profile : " + DOJO_PROFILE)
+			else: conf.msg(DOJO_PROFILE + " created")
+		else : conf.end_msg("ok",color="GREEN")	
+
+	else : # no engine required ( ?? -> default should be dojo)
+		conf.fatal("SHOULD NOT REACH HERE")
+		pass
