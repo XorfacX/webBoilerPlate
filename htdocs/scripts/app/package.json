@@ -1,0 +1,34 @@
+{
+	"name": "webRoot",
+	"description": "DESC TODO",
+	"version":"1",
+	"keywords": ["JavaScript", "Dojo", "Base", "FairyDwarves"],
+	"maintainers":[ {
+        "name": "XorfacX",
+        "email": "xorfacx@fairydwarves.com"
+    }
+  ],
+  "contributors":[ {
+        "name": "XorfacX",
+        "email": "xorfacx@fairydwarves.com"
+    }
+  ],
+	"bugs": "http://www.hostedredmine.com/projects/fairydwarves_05/issues",
+	"licenses": [
+		 {
+				 "type": "BSD 3"
+		 }
+	],
+	
+	"repository": {
+    "type":"git",
+    "url":"http://github.com/xorfacx/webRoot",
+    "path": "htdocs/app"
+  },	
+	
+	"main": "./main",
+	"dojoBuild": "package.js",	
+  "dependencies": {
+    "dojo": "1.9.3"
+  }
+}

@@ -15,82 +15,119 @@ dependencies = {
     stripConsole: "normal",
     mini: true,
     //webkitMobile: true,
-
-    layers: [
-        {
-            name: "dojo.js",
-            customBase: true,
-            dependencies: [
-
+    
+    packages:[{
+        name: "dojo",
+        location: "dojo"
+    },{
+        name: "dijit",
+        location: "dijit"
+    },{
+        name: "dojox",
+        location: "dojox"
+    },{
+        name: "app",
+        location: "app"
+    }],
+    
+    layers: {
+        "dojo/dojo": {
+            include: [
                 "dojo/_base/loader",
-
-                "dojo/selector/lite", //or acme  //depends on selectorEngine set in dojoConfig
-                "dojo/io/script",
-                "dojo/on",
-                "dojo/dom-construct",
-
-                    "dojox/image",
-
-                    "dojox/gfx",
-                    "dojox/gfx/fx",
-                    "dojo/fx",
-
-                    "dojox/gfx/svg",
-                    //"dojox/gfx/canvasWithEvents",
-
-                    //"dojox/mobile",
-                    "dojox/mobile/Audio",
-
-                    //"dojo/i18n",
-
-                    "dijit/_base/manager",
-                    "dijit/_Contained",
-                    "dijit/_WidgetBase",
-
-                    "dijit/nls/loading", //bug #248006: not copied
-                    "dijit/nls/common", //bug #248006: not copied
-                    "dijit/nls/fr/loading",
-                    "dijit/nls/fr/common",
-                    "dijit/Dialog",
-                    "dijit/Tooltip",
-                    "dijit/form/Form",
-                    "dijit/form/Button",
-                    "dijit/form/ValidationTextBox",
-                        "dijit/form/nls/validate", //bug #248006: not copied
-                        "dijit/form/nls/fr/validate",
-                        "dijit/form/Textarea",
-                        "dijit/form/nls/Textarea", //bug #248006: not copied
-                        "dijit/form/nls/fr/Textarea"
-                      
-                "dojox/mobile",
-                    "dojox/mobile/View",
-                        "dojox/mobile/ScrollableView",
-                        "dojox/mobile/Heading",
-                        "dojox/mobile/RoundRectList",
-                        "dojox/mobile/ListItem",
-                        "dojox/mobile/ContentPane",
-                        "dojox/mobile/TextBox",
-                        "dojox/mobile/Button",
-                        "dojox/mobile/ToolBarButton",
-                        "dojox/mobile/SimpleDialog",
-                        "dojox/mobile/Slider",
-                        "dojox/mobile/CheckBox",
-                        "dojox/mobile/Audio",
-                
-                        "dojox/gesture/swipe"
-            ]
-            /*, doesn't work
+                "dojo/i18n",
+                "dojo/domReady",
+                "dojo/on"
+            ],
             exclude: [
                 "dojo/parser",
                 "dojo/_base/xhr"
-            ]*/
+            ],
+            customBase: true,
+            boot: true
+        },
+        "app/Dialog": {
+            include: [
+                "app/main" //should include the others
+            ]
         }
-    ],
-
-    prefixes: [
-        ["dijit", "../dijit"],
-        ["dojox", "../dojox"]
-    ] /*,
+    }
+//
+//    layers: [
+//        {
+//            name: "dojo.js",
+//            customBase: true,
+//            boot: true
+//            dependencies: [
+//
+//                "dojo/_base/loader",
+//
+//                "dojo/selector/lite", //or acme  //depends on selectorEngine set in dojoConfig
+//                "dojo/io/script",
+//                "dojo/on",
+//                "dojo/dom-construct",
+//
+//                    "dojox/image",
+//
+//                    "dojox/gfx",
+//                    "dojox/gfx/fx",
+//                    "dojo/fx",
+//
+//                    "dojox/gfx/svg",
+//                    //"dojox/gfx/canvasWithEvents",
+//
+//                    //"dojox/mobile",
+//                    "dojox/mobile/Audio",
+//
+//                    //"dojo/i18n",
+//
+//                    "dijit/_base/manager",
+//                    "dijit/_Contained",
+//                    "dijit/_WidgetBase",
+//
+//                    "dijit/nls/loading", //bug #248006: not copied
+//                    "dijit/nls/common", //bug #248006: not copied
+//                    "dijit/nls/fr/loading",
+//                    "dijit/nls/fr/common",
+//                    "dijit/Dialog",
+//                    "dijit/Tooltip",
+//                    "dijit/form/Form",
+//                    "dijit/form/Button",
+//                    "dijit/form/ValidationTextBox",
+//                        "dijit/form/nls/validate", //bug #248006: not copied
+//                        "dijit/form/nls/fr/validate",
+//                        "dijit/form/Textarea",
+//                        "dijit/form/nls/Textarea", //bug #248006: not copied
+//                        "dijit/form/nls/fr/Textarea"
+//                      
+//                "dojox/mobile",
+//                    "dojox/mobile/View",
+//                        "dojox/mobile/ScrollableView",
+//                        "dojox/mobile/Heading",
+//                        "dojox/mobile/RoundRectList",
+//                        "dojox/mobile/ListItem",
+//                        "dojox/mobile/ContentPane",
+//                        "dojox/mobile/TextBox",
+//                        "dojox/mobile/Button",
+//                        "dojox/mobile/ToolBarButton",
+//                        "dojox/mobile/SimpleDialog",
+//                        "dojox/mobile/Slider",
+//                        "dojox/mobile/CheckBox",
+//                        "dojox/mobile/Audio",
+//                
+//                        "dojox/gesture/swipe"
+//            ]
+//            /*, doesn't work
+//            exclude: [
+//                "dojo/parser",
+//                "dojo/_base/xhr"
+//            ]*/
+//        }
+//    ],
+//
+//    prefixes: [
+//        ["dijit", "../dijit"],
+//        ["dojox", "../dojox"]
+//    ] /*,
     
     //http://dojotoolkit.org/reference-guide/1.9/build/transforms/hasFixup.html#id4
     //http://dojotoolkit.org/documentation/tutorials/1.7/build/
