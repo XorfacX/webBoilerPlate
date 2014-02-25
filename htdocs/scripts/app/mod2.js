@@ -1,11 +1,8 @@
-define(['dojo/_base/declare'], function (declare) {
-
+define([
+    'dojo/_base/declare'
+], function (declare) {
     return declare(null, {
-        /**
-        * Create The Shop Frame: description + secured payment iframe
-        *
-        * @constructor
-        */
+
         constructor: function () {
             this.test = "test 2 data";
         },
@@ -13,5 +10,5 @@ define(['dojo/_base/declare'], function (declare) {
             return this.test;
         }
 
-    }); //end declare
-});     //define
+    });//declare
+});//define
