@@ -22,7 +22,7 @@
 	
 	"repository": {
     "type":"git",
-    "url":"http://github.com/xorfacx/webRoot",
+    "url":"https://github.com/XorfacX/webBoilerPlate.git", 
     "path": "htdocs/app"
   },	
 	
