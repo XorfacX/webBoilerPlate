@@ -25,8 +25,8 @@ APPNAME = 'webRoot' #set Your Project Name Here
 VERSION = '1' #set Your Project Version Here (only used internally by waf on build)
 ENGINES = 'dojo'  #nb: we should think about cleaning this from here or from depends/wscript ...
 
-ANDROID_PACKAGE = "com.fairydwarves.Gamebook" #set your android package identifier when applicable
-ANDROID_PROJECT = "FDwebRoot" #set your android app name when applicable
+ANDROID_PACKAGE = "com.fairydwarves.webboilerplate" #set your android package identifier when applicable
+ANDROID_PROJECT = "webBoilerPlate" #set your android app name when applicable
 
 
 #TODO : find a way to get that from depends/wscript
