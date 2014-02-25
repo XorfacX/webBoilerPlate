@@ -24,3 +24,4 @@ htdocs/scripts/util
 publish/android/**/
 materials/wip
 htdocs/Web*.config
+htdocs/scripts/release
