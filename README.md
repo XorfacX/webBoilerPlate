@@ -1,7 +1,7 @@
-FDwebRoot
+webBoilerPlate
 ===
 
-The project aim is to be the root of all FD web project.
+The project aim is to be the root of all web project.
 It contains the structure and scripts design to start a project with a proper configuration.
 
 It uses:
