@@ -6,8 +6,8 @@ var dojoP = "../../"; // we start from util/buildscripts
 var profile = (function () {
     return {
         basePath: "",
-        releaseDir: dojoP + "release",
-        releaseName: "dojo_build",
+        releaseDir: dojoP,
+        releaseName: "_release",
 
         copyTests: false,
         cssOptimize: "comments",
@@ -36,9 +36,20 @@ var profile = (function () {
             "dojo/dojo": { //SET YOUR OWN DOJO LAYER HERE
                 include: [
                     "dojo/_base/loader",
-                    "dojo/i18n",
+                    "dojo/_base/kernel",
+                    "dojo/_base/lang",
+                    "dojo/_base/array",
+                    "dojo/_base/config",
+                    "dojo/_base/declare",
+                    "dojo/has",
+                    "dojo/sniff",
+                    //"dojo/json",
+                    "dojo/selector/lite", //or acme  //depends on selectorEngine set in dojoConfig
+                    "dojo/dojo",
                     "dojo/domReady",
-                    "dojo/on"
+                    //"dojo/on",
+
+                    "app/main"
                 ],
                 exclude: [
                     "dojo/parser",
@@ -49,19 +60,33 @@ var profile = (function () {
             },
             "app/main": {
                 include: [
-                    "app/main" //should include others app module
+                    "app/main" //should include others app modul
                 ],
                 exclude: [
-                    "dojo/dojo" //to avoid building dojo into the app due to module dependencies
+                    /*"dojo/dojo", //to avoid building dojo into the app due to module dependencies
+                    "dojo/_base/loader",
+                    "dojo/_base/declare",
+                    "dojo/selector/lite"*/
                 ]
             }
-        }
+        },
 
-        //SPECIFY YOUR OWN staticHasFeatures HERE
+        //SPECIFY YOUR OWN staticHasFeatures list BELOW
         //http://dojotoolkit.org/reference-guide/1.9/build/transforms/hasFixup.html#id4
         //http://dojotoolkit.org/documentation/tutorials/1.7/build/
         //https://dojotoolkit.org/documentation/tutorials/1.8/device_optimized_builds/
         //http://dojotoolkit.org/reference-guide/1.9/build/buildSystem.html
+
+        staticHasFeatures: {
+            'dojo-trace-api': 0, //we dont need to debug the loader
+            'dojo-log-api': 0, //we dont need to debug the loader
+            'dojo-publish-privates': 0, //we dont need to debug the loader
+            'dojo-sync-loader': 0, //we are full async
+            'dojo-test-sniff': 0, //we dont want tests
+            "dojo-unit-tests": 0, //we dont want tests
+            "json-stringify": 1, //we use browser w json capabilities
+            "json-parse": 1, //we use browser w json capabilities
+        }
 
         /*
         //Mobile
