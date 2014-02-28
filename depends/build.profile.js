@@ -33,11 +33,8 @@ var profile = (function () {
         }],
 
         layers: {
-            "dojo/dojo": { //DOJO
+            "dojo/dojo": { //DOJO LAYER
                 include: [
-                    "dojo/has",
-                    "dojo/selector/lite", //or acme  //depends on selectorEngine set in dojoConfig
-
                     //loader
                     "dojo/has",
                     'dojo/sniff',
@@ -46,51 +43,28 @@ var profile = (function () {
                     'dojo/_base/lang',
                     'dojo/_base/config',
 
+                    //SPECIFY THE SAME selectorEngine SET IN dojoConfig
+                    "dojo/selector/lite",
+
                     //SPECIFY YOUR LIST OF DOJO/DOJOX/DIJIT MODULE HERE
                     "dojo/on"
 
                 ],
                 exclude: [
-                   /* "dojo/parser",
-                    "dojo/_base/xhr",
-                    'dojo/NodeList-dom',
-                    'dojo/dom-construct',
-                    'dojo/_base/connect',
-                    'dojo/dom-class',
-                    'dojo/_base/fx',
-                    'dojo/dom-geometry',
-                    'dojo/_base/browser',
-                    'dojo/dom-attr',
-                    'dojo/mouse',
-                    'dojo/keys',
-                    'dojo/_base/html',
-                    'dojo/_base/Color',
-                    'dojo/topic',
-                    'dojo/_base/NodeList',
-                    'dojo/dom-prop',
-                    'dojo/_base/unload',
-                    'dojo/dom-style',
-                    'dojo/_base/event'*/
+                    //OPTIONAL LIST OF ITEM TO EXCLUDE
                 ],
                 customBase: true,
                 boot: true
             },
-            "app/main": {
+            "app/main": { //APP LAYER
                 include: [
                     "app/main" //should include others app module
                 ],
                 exclude: [
-                    //NEED TO EXCLUDE DOJO/DIJIT/DOJOX FROM HERE, else they get duplicated
-                    "dojo/has",
-                    'dojo/sniff',
-                    'dojo/_base/declare',
-                    'dojo/_base/kernel',
-                    'dojo/_base/lang',
-                    'dojo/_base/config',
-                    'dojo/on'
-                ],
-                customBase: true,
+                    //sometimes u need to exclude duplicated dojo module from the app layer, do it here
+                ]
             }
+            //CONTINUE LIST OF LAYERS HERE (like FDwebGE etc)
         },
 
         //SPECIFY YOUR OWN staticHasFeatures list BELOW
@@ -99,6 +73,7 @@ var profile = (function () {
         //https://dojotoolkit.org/documentation/tutorials/1.8/device_optimized_builds/
         //http://dojotoolkit.org/reference-guide/1.9/build/buildSystem.html
 
+        //Minimal stuff to setup
         staticHasFeatures: {
             'dojo-trace-api': 0, //we dont need to debug the loader
             'dojo-log-api': 0, //we dont need to debug the loader
@@ -107,14 +82,14 @@ var profile = (function () {
             'dojo-test-sniff': 0, //we dont want tests
             "dojo-unit-tests": 0, //we dont want tests
             "json-stringify": 1, //we use browser w json capabilities
-            "json-parse": 1//, //we use browser w json capabilities
-            //'dojo-timeout-api': 0,
-            //'dojo-cdn': 0,
-            //'dojo-loader-eval-hint-url': 1,
+            "json-parse": 1, //we use browser w json capabilities
+            'dojo-timeout-api': 0, //we dont deal with modules that don't load
+            'dojo-cdn': 0, //we dont use cdn
+            'dojo-loader-eval-hint-url': 1, //loader doesnt need hints to resolve modules
         }
 
         /*
-        //Mobile
+        //Mobile wip
         staticHasFeatures: {
             "dom-addeventlistener": true,
             "dom-qsa": true,
@@ -131,7 +106,7 @@ var profile = (function () {
         */
 
         /*
-        //Chrome Packaged
+        //Chrome Packaged App
         staticHasFeatures: {
             "dojo-cdn": 0,
             "dojo-loader-eval-hint-url": 0,
