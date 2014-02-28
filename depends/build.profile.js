@@ -13,7 +13,7 @@ var profile = (function () {
         cssOptimize: "comments",
         layerOptimize: "closure",
         optimize: "closure",
-        stripConsole: "normal",
+        stripConsole: "normal", //remove console.log but keep console.error and console.warn
         mini: true,
 
         //webkitMobile: true, //ENABLE FOR MOBILE
@@ -33,41 +33,63 @@ var profile = (function () {
         }],
 
         layers: {
-            "dojo/dojo": { //SET YOUR OWN DOJO LAYER HERE
+            "dojo/dojo": { //DOJO
                 include: [
-                    "dojo/_base/loader",
-                    "dojo/_base/kernel",
-                    "dojo/_base/lang",
-                    "dojo/_base/array",
-                    "dojo/_base/config",
-                    "dojo/_base/declare",
                     "dojo/has",
-                    "dojo/sniff",
-                    //"dojo/json",
                     "dojo/selector/lite", //or acme  //depends on selectorEngine set in dojoConfig
-                    "dojo/dojo",
-                    "dojo/domReady",
-                    //"dojo/on",
 
-                    "app/main"
+                    //loader
+                    "dojo/has",
+                    'dojo/sniff',
+                    'dojo/_base/declare',
+                    'dojo/_base/kernel',
+                    'dojo/_base/lang',
+                    'dojo/_base/config',
+
+                    //SPECIFY YOUR LIST OF DOJO/DOJOX/DIJIT MODULE HERE
+                    "dojo/on"
+
                 ],
                 exclude: [
-                    "dojo/parser",
-                    "dojo/_base/xhr"
+                   /* "dojo/parser",
+                    "dojo/_base/xhr",
+                    'dojo/NodeList-dom',
+                    'dojo/dom-construct',
+                    'dojo/_base/connect',
+                    'dojo/dom-class',
+                    'dojo/_base/fx',
+                    'dojo/dom-geometry',
+                    'dojo/_base/browser',
+                    'dojo/dom-attr',
+                    'dojo/mouse',
+                    'dojo/keys',
+                    'dojo/_base/html',
+                    'dojo/_base/Color',
+                    'dojo/topic',
+                    'dojo/_base/NodeList',
+                    'dojo/dom-prop',
+                    'dojo/_base/unload',
+                    'dojo/dom-style',
+                    'dojo/_base/event'*/
                 ],
                 customBase: true,
                 boot: true
             },
             "app/main": {
                 include: [
-                    "app/main" //should include others app modul
+                    "app/main" //should include others app module
                 ],
                 exclude: [
-                    /*"dojo/dojo", //to avoid building dojo into the app due to module dependencies
-                    "dojo/_base/loader",
-                    "dojo/_base/declare",
-                    "dojo/selector/lite"*/
-                ]
+                    //NEED TO EXCLUDE DOJO/DIJIT/DOJOX FROM HERE, else they get duplicated
+                    "dojo/has",
+                    'dojo/sniff',
+                    'dojo/_base/declare',
+                    'dojo/_base/kernel',
+                    'dojo/_base/lang',
+                    'dojo/_base/config',
+                    'dojo/on'
+                ],
+                customBase: true,
             }
         },
 
@@ -85,7 +107,10 @@ var profile = (function () {
             'dojo-test-sniff': 0, //we dont want tests
             "dojo-unit-tests": 0, //we dont want tests
             "json-stringify": 1, //we use browser w json capabilities
-            "json-parse": 1, //we use browser w json capabilities
+            "json-parse": 1//, //we use browser w json capabilities
+            //'dojo-timeout-api': 0,
+            //'dojo-cdn': 0,
+            //'dojo-loader-eval-hint-url': 1,
         }
 
         /*
