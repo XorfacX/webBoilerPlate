@@ -13,8 +13,8 @@ It uses:
 
 HowTo
 ---
-./waf configure --download
-./waf build
+./waf configure --download   
+./waf build   
 ./waf distclean
 
 
