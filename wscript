@@ -97,6 +97,7 @@ def configure(conf):
         if android_proj_node is None :
             conf.end_msg("failed","RED")
             conf.start_msg("Building Cordova Project")
+            #NEEDS NODE.JS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
             cordova_create_proc = subprocess.Popen(
                 cordova_create_node.abspath() + " " + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + " " + ANDROID_PACKAGE + " " + ANDROID_PROJECT,
                 stdout=subprocess.PIPE,
