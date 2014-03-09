@@ -105,12 +105,12 @@ def configure(conf):
             conf.to_log(err)
             #finding the mandatory dojo layer
             dojorelnode = dojonode.make_node('release')
-          	#needed to create folders on windows
+            #needed to create folders on windows
             if not os.path.exists(dojorelnode.abspath()) :
-            	dojorelnode.mkdir()
+                dojorelnode.mkdir()
             dojobuildnode = dojorelnode.make_node("dojo_build")
             if not os.path.exists(dojobuildnode.abspath()) :
-            	dojobuildnode.mkdir()
+                dojobuildnode.mkdir()
             conf.end_msg( dojorelnode.relpath(),"GREEN")
           else :
             conf.end_msg("failed","RED")
@@ -309,26 +309,26 @@ def build(bld):
 
         #define how to copy dojo components. source and target needs to be in the dojolayer. everything else is relative to it
         def cp_dojo_task(task):
-	        srcnode = task.inputs[0].parent # get used dojo components from src
-	        tgnode = task.outputs[0].parent # prepare to copy them to tg
-	        
-	        #copy required resources
-	        for dcmpnt in ['dojo.js','../app/nls', 'resources','css','dijit'] : #build : copying the result of config into build folder
-	        	dcnode = srcnode.get_src().find_node(dcmpnt)
-	        	if dcnode is None : bld.fatal(os.path.join(srcnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-	        	if os.path.isdir(dcnode.abspath()) :
-	        		bld_dcnode = tgnode.make_node(dcnode.path_from(srcnode))
-	        		if os.path.exists(bld_dcnode.abspath()) :
-	        		    shutil.rmtree(bld_dcnode.abspath())
-	        		    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-	        		res = shutil.copytree(dcnode.get_src().abspath(),bld_dcnode.abspath())
-	        	else :
-	        		srccp = dcnode.get_src().abspath();
-	        		tgtcp = tgnode.make_node(dcnode.path_from(srcnode)).abspath();
-	        		if not os.path.exists(os.path.dirname(tgtcp)) :
-	        			os.makedirs(os.path.dirname(tgtcp))
-	        		res = shutil.copy(srccp,tgtcp)
-	        return res
+            srcnode = task.inputs[0].parent # get used dojo components from src
+            tgnode = task.outputs[0].parent # prepare to copy them to tg
+            
+            #copy required resources
+            for dcmpnt in ['dojo.js','../app/nls', 'resources','css','dijit'] : #build : copying the result of config into build folder
+                dcnode = srcnode.get_src().find_node(dcmpnt)
+                if dcnode is None : bld.fatal(os.path.join(srcnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
+                if os.path.isdir(dcnode.abspath()) :
+                    bld_dcnode = tgnode.make_node(dcnode.path_from(srcnode))
+                    if os.path.exists(bld_dcnode.abspath()) :
+                        shutil.rmtree(bld_dcnode.abspath())
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                    res = shutil.copytree(dcnode.get_src().abspath(),bld_dcnode.abspath())
+                else :
+                    srccp = dcnode.get_src().abspath();
+                    tgtcp = tgnode.make_node(dcnode.path_from(srcnode)).abspath();
+                    if not os.path.exists(os.path.dirname(tgtcp)) :
+                        os.makedirs(os.path.dirname(tgtcp))
+                    res = shutil.copy(srccp,tgtcp)
+            return res
 
         #find htdocs dir
         htdocs_dir = bld.path.get_src().find_dir('htdocs')
@@ -339,7 +339,7 @@ def build(bld):
         #find app dir
         app_dir = scripts_dir.find_dir('app')
         if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
-        	
+            
         #create dirs 
         for folder in ['scripts/app']:
           foldernode = bldnode.make_node(folder)
@@ -349,19 +349,19 @@ def build(bld):
             androidfoldernode.mkdir() 
         
         #copy content                                          
-        for folder in ['audio','content','css','dojox', 'fonts','images']:        	
-	        _destDir = os.path.join(bldnode.abspath(), folder)
-	        if os.path.exists(_destDir) :
-	          shutil.rmtree(_destDir) #remove existing dir 
-	          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-	        shutil.copytree(os.path.join(htdocs_dir.abspath(),folder), _destDir)
-	        
-	        if bld.env.PLATFORM == 'android' :
-	            _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
-	            if os.path.exists(_android_destDir) :
-	              shutil.rmtree(_android_destDir) #remove existing dir 
-	              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-	            shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
+        for folder in ['audio','content','css','dojox', 'fonts','images']:            
+            _destDir = os.path.join(bldnode.abspath(), folder)
+            if os.path.exists(_destDir) :
+              shutil.rmtree(_destDir) #remove existing dir 
+              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+            shutil.copytree(os.path.join(htdocs_dir.abspath(),folder), _destDir)
+            
+            if bld.env.PLATFORM == 'android' :
+                _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
+                if os.path.exists(_android_destDir) :
+                  shutil.rmtree(_android_destDir) #remove existing dir 
+                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
 
 #        # handle images/
 #        for img in htdocs_dir.get_src().ant_glob('images/**/*.png images/**/*.gif images/**/*.jpg'): # find images files
@@ -496,19 +496,19 @@ def build(bld):
 #            target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
 #          )
         #dojo + ressources   ##NB: we should build ressources using dojo !!
-        dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')	# build dojo layer
+        dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')    # build dojo layer
         if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),'dojo/dojo.js') + " not found")
         bld(
-					rule=cp_dojo_task,
-					source=dojo_layer.get_src(),
-					target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
+                    rule=cp_dojo_task,
+                    source=dojo_layer.get_src(),
+                    target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
         )# copy dojo to the platform build directory
         if bld.env.PLATFORM == 'android' :
           #copying
           bld(
             rule=cp_dojo_task,
-					  source=dojo_layer.get_src(),
-					  target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
+                      source=dojo_layer.get_src(),
+                      target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
           )
         
         #markdown.js
@@ -571,7 +571,7 @@ def build(bld):
         #TODO
         # building android version
 
-       	
+           
         #define a cordova build task
         def androbuild_task(task):
           src = task.inputs[0].abspath()
@@ -587,7 +587,7 @@ def build(bld):
           if os.name == 'posix' and platform.system() == 'Linux':
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build")
               if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
-              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)	
+              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)    
           elif os.name == 'nt' and platform.system() == 'Windows' :
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build.bat")
               if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
@@ -692,7 +692,7 @@ def run(ctx): # this is a buildcontext
     if os.name == 'posix' and platform.system() == 'Linux':
         runandroid_node=android_proj_node.find_node("cordova").find_node("run")
         if runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
-        os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)	
+        os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)    
     elif os.name == 'nt' and platform.system() == 'Windows' :
         runandroid_node=android_proj_node.find_node("cordova").find_node("run.bat")
         if  runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
