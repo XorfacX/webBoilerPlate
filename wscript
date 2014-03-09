@@ -20,6 +20,7 @@ import multiprocessing;
 import json;
 from string import Template;
 import platform;
+import time;
 
 APPNAME = 'webRoot' #set Your Project Name Here
 VERSION = '1' #set Your Project Version Here (only used internally by waf on build)
@@ -62,149 +63,27 @@ def configure(conf):
     if scriptsnode is None : conf.fatal("htdocs/scripts/ subfolder was not found. Cannot continue.")
 
 
-    #copying depends single files
-    for depend_file in conf.env.DEPENDS_FNS:
-        mdnode = depnode.find_node(depend_file)
-        if mdnode is None: conf.fatal(depend_file + " was not found. Please run waf configure --download.")
-        #else: print depend_file + " path " + mdnode.abspath()
-        conf.start_msg("Retrieving " + depend_file )
-        shutil.copy(mdnode.abspath(),scriptsnode.abspath())
-        conf.end_msg( scriptsnode.find_node(os.path.basename(mdnode.abspath())).relpath())
+    #copying depends single files and folders cpntent
+    for depend in conf.env.DEPENDS:
+        dependNode = depnode.find_node(depend)
+        if dependNode is None: conf.fatal(depend + " was not found. Please run waf configure --download.")
+        #else: print depend + " path " + dependNode.abspath()
 
-
-    if conf.env.ENGINE == "dojo":
-#        #find dojo directory
-#        dojonode = depnode.ant_glob(DOJO_UNZIP,src=False, dir=True)[0]
-#        if dojonode is None: conf.fatal("dojo toolkit was not found. Please run waf configure.")
-#        #else: print "dojo path " + dojonode.abspath()
-
-#        #building dojo with our profile
-#        profnode = depnode.find_node(BUILD_PROFILE)
-#        if profnode is None: conf.fatal("dojo build profile was not found. Please run waf configure.")
-#        #else: print "profile path " + profnode.abspath()
-
-#        #check if dojo was already built
-#        dojorelnode = dojonode.find_dir('release')
-#        if dojorelnode is None :
-#          bsnode = dojonode.find_dir("util/buildscripts") # location of dojo build scripts
-        
-#          #http://livedocs.dojotoolkit.org/build/buildSystem
-#          if (platform.system() == 'Windows'):
-#            buildprog = "cmd.exe /c build.bat"
-#          else:
-#            buildprog = "sh build.sh"
-        
-#          conf.start_msg("Building " + profnode.relpath() )
-#          dojo_build_proc = subprocess.Popen(
-#            shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
-#            cwd= bsnode.abspath(),
-#            stdout=subprocess.PIPE,
-#            stderr=subprocess.PIPE
-#          )
-#          out,err = dojo_build_proc.communicate()
-#          if dojo_build_proc.returncode == 0 :
-#            conf.to_log(out)
-#            conf.to_log(err)
-#            #finding the mandatory dojo layer
-#            dojorelnode = dojonode.make_node('release')
-#            #needed to create folders on windows
-#            if not os.path.exists(dojorelnode.abspath()) :
-#                dojorelnode.mkdir()
-#            dojobuildnode = dojorelnode.make_node("dojo_build")
-#            if not os.path.exists(dojobuildnode.abspath()) :
-#                dojobuildnode.mkdir()
-#            conf.end_msg( dojorelnode.relpath(),"GREEN")
-#          else :
-#            conf.end_msg("failed","RED")
-#            conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-
-#        #finding dojo mandatory layer and copying only what we need
-        
-#        dojobuildnode = dojorelnode.find_dir("dojo_build")
-#        if dojobuildnode is None : conf.fatal("dojo_build was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
-#        dojobaselayer = dojobuildnode.find_node("dojo/dojo.js")
-#        if dojobaselayer is None : conf.fatal("dojo/dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
-#        dojobaselayer_uc = dojobuildnode.find_node("dojo/dojo.js.uncompressed.js")
-#        if dojobaselayer_uc is None : conf.fatal("dojo/dojo.js.uncompressed.js base layer was not found in build directory. Cannot continue.")
-##        dojoxmobilethemechooser = dojobuildnode.find_node("dojox/mobile/deviceTheme.js")
-##        if dojoxmobilethemechooser is None : conf.fatal("dojox/mobile/deviceTheme.js mandatory base layer was not found in build directory. Cannot continue.")
-                
-#        #copying mandatory dojo layer
-#        conf.start_msg("Extracting Dojo built layer" )
-#        # creating dojo folder
-#        scriptdojonode = scriptsnode.make_node(os.path.dirname(dojobaselayer.path_from(dojobuildnode)))
-#        if not os.path.exists(scriptdojonode.abspath()) :
-#          scriptdojonode.mkdir()
-#        shutil.copy(dojobaselayer.abspath(),scriptsnode.make_node(dojobaselayer.path_from(dojobuildnode)).abspath())
-#        conf.end_msg( scriptsnode.find_node(dojobaselayer.path_from(dojobuildnode)).relpath())
-#        conf.start_msg("Extracting Dojo built layer - uncompressed" )
-#        shutil.copy(dojobaselayer_uc.abspath(),scriptsnode.make_node(dojobaselayer_uc.path_from(dojobuildnode)).abspath())
-#        conf.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())
-        
-##        #extracting dojox mobile themes
-##        conf.start_msg("Extracting Dojox mobile Theme chooser" )
-##        # creating dojox folder
-##        htdocsdojoxnode = htdocsnode.make_node(os.path.dirname(dojoxmobilethemechooser.path_from(dojobuildnode)))
-##        if not os.path.exists(htdocsdojoxnode.abspath()) :
-##          htdocsdojoxnode.mkdir()
-##        shutil.copy(dojoxmobilethemechooser.abspath(),htdocsnode.make_node(dojoxmobilethemechooser.path_from(dojobuildnode)).abspath())
-##        conf.end_msg( htdocsnode.find_node(dojoxmobilethemechooser.path_from(dojobuildnode)).relpath())
-        
-#        conf.start_msg( "Extracting Dojox Mobile Themes ")
-#        dmblthemes_build = dojobuildnode.find_node("dojox/mobile/themes")
-#        if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")        
-#        dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
-#        if os.path.exists(dmbltnode.abspath()) : #remove existing dojox dir
-#          shutil.rmtree(dmbltnode.abspath(), 1)
-#          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-#        dmbltnode.mkdir()
-#        for ftname in ['android','blackberry','common','custom','iphone']:          
-#          thdir = dmblthemes_build.find_dir(ftname)
-#          if thdir is not None :
-#            thcss = thdir.find_node(ftname + ".css")
-#            if thcss is not None :
-#              thnode = dmbltnode.make_node(ftname)
-#              thnode.mkdir()
-#              if thnode is not None :
-#                #copy the css
-#                shutil.copy( thcss.abspath(), thnode.abspath())
-                
-#                #copy the images
-#                thimg = thdir.find_dir("images")
-#                if thimg is not None :
-#                  thimagesnode = thnode.make_node("images")
-#                  if os.path.exists(thimagesnode.abspath()) : #remove existing images dir
-#                    shutil.rmtree(thimagesnode.abspath())
-#                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-#                  shutil.copytree (thimg.abspath(), thimagesnode.abspath() )
-                  
-#                #ipad specific from iphone theme
-#                ipadcss = thdir.find_node("ipad.css")
-#                if ipadcss is not None :
-#                  shutil.copy( ipadcss.abspath(), thnode.abspath())
-          
-#        conf.end_msg( "ok" )
-
-#        # Copying doh for testing purposes into our tests directory
-#        testsnode =  conf.path.find_dir('tests')
-#        #if testsnode is None : conf.fatal("tests/ subfolder was not found. Cannot continue.")
-        
-#        if testsnode is not None :
-#          dohnode = dojonode.find_dir('util/doh')
-#          if dohnode is None : conf.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
-  
-#          dohdstnode = testsnode.make_node('doh')
-#          conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
-#          if os.path.exists(dohdstnode.relpath()) :
-#            shutil.rmtree(dohdstnode.relpath())
-#            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-#          shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
-#          conf.end_msg( "ok" )
-        pass
-    else: # no need of dojo
-        pass
-    #end of conf.env.ENGINE
-
+        if os.path.isdir(dependNode.abspath()) : #FOLDER HANDLING
+            conf.start_msg("Retrieving " + depend )
+            files = os.listdir(dependNode.abspath())
+            for file in files:
+                src_file = os.path.join(dependNode.abspath(), file)
+                dst_file = os.path.join(scriptsnode.abspath(), file)
+                if os.path.exists(dst_file) : #remove existing dir
+                    shutil.rmtree(dst_file)
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                shutil.move(src_file, dst_file)
+            conf.end_msg(scriptsnode.relpath() + " : " + ', '.join(files)) # scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
+        else : #FILE HANDLING
+            conf.start_msg("Retrieving " + depend )
+            shutil.copy(dependNode.abspath(),scriptsnode.abspath())
+            conf.end_msg( scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
 
     if conf.env.PLATFORM == 'android' :
         #preparing cordova project
@@ -346,17 +225,146 @@ def build(bld):
         #find app dir
         app_dir = scripts_dir.find_dir('app')
         if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
-            
+
+
+        #find dojo directory
+        dojonode = depnode.ant_glob(DOJO_UNZIP,src=False, dir=True)[0]
+        if dojonode is None: bld.fatal("dojo toolkit was not found. Please run waf configure.")
+        #else: print "dojo path " + dojonode.abspath()
+
+        #building dojo with our profile
+        profnode = depnode.find_node(BUILD_PROFILE)
+        if profnode is None: bld.fatal("dojo build profile was not found. Please run waf configure.")
+        #else: print "profile path " + profnode.abspath()
+
+        #check if dojo was already built
+        dojorelnode = dojonode.find_dir('release')
+        if dojorelnode is None :
+          bsnode = dojonode.find_dir("util/buildscripts") # location of dojo build scripts
+        
+          #http://livedocs.dojotoolkit.org/build/buildSystem
+          if (platform.system() == 'Windows'):
+            buildprog = "cmd.exe /c build.bat"
+          else:
+            buildprog = "sh build.sh"
+        
+          bld.start_msg("Building " + profnode.relpath() )
+          dojo_build_proc = subprocess.Popen(
+            shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
+            cwd= bsnode.abspath(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+          )
+          out,err = dojo_build_proc.communicate()
+          if dojo_build_proc.returncode == 0 :
+            bld.to_log(out)
+            bld.to_log(err)
+            #finding the mandatory dojo layer
+            dojorelnode = dojonode.make_node('release')
+            #needed to create folders on windows
+            if not os.path.exists(dojorelnode.abspath()) :
+                dojorelnode.mkdir()
+            dojobuildnode = dojorelnode.make_node("dojo_build")
+            if not os.path.exists(dojobuildnode.abspath()) :
+                dojobuildnode.mkdir()
+            bld.end_msg( dojorelnode.relpath(),"GREEN")
+          else :
+            bld.end_msg("failed","RED")
+            bld.fatal("Command Output : \n" + out + "Error :\n" + err)
+
+        #finding dojo mandatory layer and copying only what we need
+        
+        dojobuildnode = dojorelnode.find_dir("dojo_build")
+        if dojobuildnode is None : bld.fatal("dojo_build was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
+        dojobaselayer = dojobuildnode.find_node("dojo/dojo.js")
+        if dojobaselayer is None : bld.fatal("dojo/dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
+        dojobaselayer_uc = dojobuildnode.find_node("dojo/dojo.js.uncompressed.js")
+        if dojobaselayer_uc is None : bld.fatal("dojo/dojo.js.uncompressed.js base layer was not found in build directory. Cannot continue.")
+#        dojoxmobilethemechooser = dojobuildnode.find_node("dojox/mobile/deviceTheme.js")
+#        if dojoxmobilethemechooser is None : bld.fatal("dojox/mobile/deviceTheme.js mandatory base layer was not found in build directory. Cannot continue.")
+                
+        #copying mandatory dojo layer
+        bld.start_msg("Extracting Dojo built layer" )
+        # creating dojo folder
+        scriptdojonode = scriptsnode.make_node(os.path.dirname(dojobaselayer.path_from(dojobuildnode)))
+        if not os.path.exists(scriptdojonode.abspath()) :
+          scriptdojonode.mkdir()
+        shutil.copy(dojobaselayer.abspath(),scriptsnode.make_node(dojobaselayer.path_from(dojobuildnode)).abspath())
+        bld.end_msg( scriptsnode.find_node(dojobaselayer.path_from(dojobuildnode)).relpath())
+        bld.start_msg("Extracting Dojo built layer - uncompressed" )
+        shutil.copy(dojobaselayer_uc.abspath(),scriptsnode.make_node(dojobaselayer_uc.path_from(dojobuildnode)).abspath())
+        bld.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())
+        
+#        #extracting dojox mobile themes
+#        bld.start_msg("Extracting Dojox mobile Theme chooser" )
+#        # creating dojox folder
+#        htdocsdojoxnode = htdocsnode.make_node(os.path.dirname(dojoxmobilethemechooser.path_from(dojobuildnode)))
+#        if not os.path.exists(htdocsdojoxnode.abspath()) :
+#          htdocsdojoxnode.mkdir()
+#        shutil.copy(dojoxmobilethemechooser.abspath(),htdocsnode.make_node(dojoxmobilethemechooser.path_from(dojobuildnode)).abspath())
+#        bld.end_msg( htdocsnode.find_node(dojoxmobilethemechooser.path_from(dojobuildnode)).relpath())
+        
+        bld.start_msg( "Extracting Dojox Mobile Themes ")
+        dmblthemes_build = dojobuildnode.find_node("dojox/mobile/themes")
+        if dmblthemes_build is None : bld.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")        
+        dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
+        if os.path.exists(dmbltnode.abspath()) : #remove existing dojox dir
+          shutil.rmtree(dmbltnode.abspath(), 1)
+          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+        dmbltnode.mkdir()
+        for ftname in ['android','blackberry','common','custom','iphone']:          
+          thdir = dmblthemes_build.find_dir(ftname)
+          if thdir is not None :
+            thcss = thdir.find_node(ftname + ".css")
+            if thcss is not None :
+              thnode = dmbltnode.make_node(ftname)
+              thnode.mkdir()
+              if thnode is not None :
+                #copy the css
+                shutil.copy( thcss.abspath(), thnode.abspath())
+                
+                #copy the images
+                thimg = thdir.find_dir("images")
+                if thimg is not None :
+                  thimagesnode = thnode.make_node("images")
+                  if os.path.exists(thimagesnode.abspath()) : #remove existing images dir
+                    shutil.rmtree(thimagesnode.abspath())
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                  shutil.copytree (thimg.abspath(), thimagesnode.abspath() )
+                  
+                #ipad specific from iphone theme
+                ipadcss = thdir.find_node("ipad.css")
+                if ipadcss is not None :
+                  shutil.copy( ipadcss.abspath(), thnode.abspath())
+          
+        bld.end_msg( "ok" )
+
+        # Copying doh for testing purposes into our tests directory
+        testsnode =  bld.path.find_dir('tests')
+        #if testsnode is None : bld.fatal("tests/ subfolder was not found. Cannot continue.")
+        
+        if testsnode is not None :
+          dohnode = dojonode.find_dir('util/doh')
+          if dohnode is None : bld.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
+  
+          dohdstnode = testsnode.make_node('doh')
+          bld.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
+          if os.path.exists(dohdstnode.relpath()) :
+            shutil.rmtree(dohdstnode.relpath())
+            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+          shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
+          bld.end_msg( "ok" )    
+
         #create dirs 
         for folder in ['scripts/app']:
           foldernode = bldnode.make_node(folder)
-          foldernode.mkdir()         
+          foldernode.mkdir()
           if bld.env.PLATFORM == 'android' :
             androidfoldernode = assetswww_dir.make_node(folder)
             androidfoldernode.mkdir() 
         
-        #copy content                                          
-        for folder in ['audio','content','css','dojox', 'fonts','images']:            
+        #copy content
+        for folder in ['audio','content','css','dojox', 'fonts','images']:
             _destDir = os.path.join(bldnode.abspath(), folder)
             if os.path.exists(_destDir) :
               shutil.rmtree(_destDir) #remove existing dir 
