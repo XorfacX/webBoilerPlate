@@ -9,7 +9,7 @@ waf-*
 depends/dojo*
 depends/**/
 depends/Markdown*
-depends/cordova*
+cordova*
 depends/*codec*
 depends/lz-string*
 *.zip
@@ -30,3 +30,4 @@ publish/android/**/
 materials/wip
 htdocs/Web*.config
 htdocs/scripts/_release
+
