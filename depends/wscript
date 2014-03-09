@@ -34,7 +34,7 @@ LZSTRING_FN="lz-string-1.3.3.js"
 LZSTRING_URL="https://raw.github.com/XorfacX/lz-string/master/libs/" + LZSTRING_FN
 
 #> http://cordova.apache.org/
-CORDOVA_VERSION = "2.8.0"  #TODO UPDATE
+CORDOVA_VERSION = "3.4.0"  #TODO UPDATE
 CORDOVA_FN="cordova-" + CORDOVA_VERSION + "-src.zip"
 CORDOVA_URL="https://www.apache.org/dist/cordova/" + CORDOVA_FN
 CORDOVA_UNZIP="cordova-" + CORDOVA_VERSION
@@ -43,7 +43,7 @@ CORDOVA_ANDROID_FN=os.path.join( CORDOVA_UNZIP,"cordova-android.zip" )
 CORDOVA_ANDROID_UNZIP=os.path.join(CORDOVA_UNZIP,"android")
 
 #> http://commons.apache.org/proper/commons-codec/
-APACHE_CODEC_VERSION = "1.8"  #TODO UPDATE
+APACHE_CODEC_VERSION = "1.9"  #TODO UPDATE
 APACHE_CODEC_FN="commons-codec-" + APACHE_CODEC_VERSION + "-bin.zip"
 APACHE_CODEC_URL="http://mirror.apache-kr.org/commons/codec/binaries/" + APACHE_CODEC_FN
 APACHE_CODEC_UNZIP="commons-codec-" + APACHE_CODEC_VERSION
@@ -225,20 +225,20 @@ def configure(conf):
         #building cordova
         conf.start_msg("Checking for Cordova Android Jar")
         commoncodecnode=conf.path.find_node(APACHE_CODEC_UNZIP).find_node(APACHE_CODEC_JAR)
-        if commoncodecnode is None : conf.fatal(os.path.join(APACHE_CODEC_UNZIP.relpath(),APACHE_CODEC_JAR) + " not found") 
-        cordovafmwklibs=conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("framework/libs")
+        if commoncodecnode is None : conf.fatal(os.path.join(APACHE_CODEC_UNZIP.relpath(),APACHE_CODEC_JAR) + " not found")
+        cordovafmwknode = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("cordova-android/framework")
+        cordovafmwklibs=cordovafmwknode.find_node("libs")
         if cordovafmwklibs is None : 
-            cordovafmwklibs=conf.path.find_node(CORDOVA_ANDROID_UNZIP).make_node("framework/libs")
+            cordovafmwklibs=conf.path.find_node(CORDOVA_ANDROID_UNZIP).make_node("cordova-android/framework/libs")
             if not os.path.exists(cordovafmwklibs.abspath()) : cordovafmwklibs.mkdir()
 
         shutil.copy(commoncodecnode.abspath(),cordovafmwklibs.abspath())
         #BUG : Detetion of successful copy not working ??
         #commoncodecfmwknode = conf.path.find_node(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())))
         #if commoncodecfmwknode is None : 
-        #    conf.fatal(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())) + " not found") 
-    
-        fmwknode = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("framework")
-        jarnode = fmwknode.find_node(CORDOVA_JAR);
+        #    conf.fatal(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())) + " not found")
+
+        jarnode = cordovafmwknode.find_node(CORDOVA_JAR);
         #checking if we need to build cordova android
         if jarnode is None :
             conf.end_msg("failed", color="RED")
@@ -247,7 +247,7 @@ def configure(conf):
                 conf.start_msg("=> Building Cordova Android Jar" )
                 crdv_android_build_proc = subprocess.Popen(
                     "android update project -p . -t android-17 && ant jar",
-                    cwd= fmwknode.abspath(),
+                    cwd= cordovafmwknode.abspath(),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     shell=True,
@@ -257,7 +257,7 @@ def configure(conf):
                     conf.to_log(out)
                     conf.to_log(err)
                     #finding the jar
-                    jarnode = fmwknode.find_node(CORDOVA_JAR);
+                    jarnode = cordovafmwknode.find_node(CORDOVA_JAR);
                     if jarnode is None :
                         conf.fatal( "ERROR : " + CORDOVA_JAR + " not found !")
                     else :
@@ -282,7 +282,7 @@ def configure(conf):
         if profnode is None : # if not creates it
             conf.end_msg("failed", color="RED")
             touch(BUILD_PROFILE)
-            if conf.path.find_node(BUILD_PROFILE) is None : conf.fatal("Unable to create build profile : " + BUILD_PROFILE)
+            if conf.path.find_node(BUILD_PROFILE) is None : conf.fatal("Unable to create blank build profile : " + BUILD_PROFILE)
             else: conf.msg("Blank " + BUILD_PROFILE + " created")
         else : conf.end_msg("ok",color="GREEN")
 
