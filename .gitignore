@@ -8,6 +8,10 @@ waf-*
 *.pui
 depends/dojo*
 depends/**/
+depends/Markdown*
+depends/cordova*
+depends/*codec*
+depends/lz-string*
 *.zip
 .idea
 htdocs/css/_.css
