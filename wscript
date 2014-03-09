@@ -632,66 +632,73 @@ def build(bld):
         )
         #androbuild_task(android_proj_node, debug = True)
 
-    elif bld.env.PLATFORM == 'chrome' : 
+    elif bld.env.PLATFORM == 'chrome' :
         ###Creating manifest needed for chrome
         chronode = bld.path.get_src().find_dir("publish/chrome_store") # find chrome_store folder
         if chronode is None : # TODO : setup basic chrome_store structure
           bld.fatal("chrome_store not found")
         def mnfst_version_change(task):
-          src = task.inputs[0]
-          tg = task.outputs[0].abspath()
-          #get bzr rev info
-          bzr_rev_proc = subprocess.Popen(shlex.split("bzr revno"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-          out,err = bzr_rev_proc.communicate()
-          if bzr_rev_proc.returncode != 0 : bld.fatal("Cannot determine current bzr revno to set version.")
-          else :
-            mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
-            mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
-          #TODO: probably simpler to use json parser if possible
-          #mnfst = json.load(src)
-          #TODO : handl errors here
-          mnfst_bld_file = open(tg,'w')
-          mnfst_bld_file.write(mnfst_str)
-          mnfst_bld_file.close()
-          return 0
+            src = task.inputs[0]
+            tg = task.outputs[0].abspath()
+            
+            #get git commits count http://stackoverflow.com/questions/677436/how-to-get-the-git-commit-count
+            git_count_proc = subprocess.Popen(shlex.split("git rev-list HEAD --count"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            out,err = git_count_proccommunicate()
+            if git_count_proc.returncode != 0 : bld.fatal("Cannot determine current git count to set version.")
+            
+            ##get bzr rev info
+            #bzr_rev_proc = subprocess.Popen(shlex.split("bzr revno"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            #out,err = bzr_rev_proc.communicate()
+            #if bzr_rev_proc.returncode != 0 : bld.fatal("Cannot determine current bzr revno to set version.")
+
+            else :
+                mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
+                mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
+            #TODO: probably simpler to use json parser if possible
+            #mnfst = json.load(src)
+            #TODO : handl errors here
+            mnfst_bld_file = open(tg,'w')
+            mnfst_bld_file.write(mnfst_str)
+            mnfst_bld_file.close()
+            return 0
         #looking fo manifest.json
         mnfstnode = chronode.find_node("manifest.json")
         if mnfstnode is None : bld.fatal("manifest.json not found")
         else :
-          bld(  rule=mnfst_version_change,
-            source = mnfstnode,
-            target = bldnode.make_node(mnfstnode.path_from(chronode))
-          )
+            bld(rule=mnfst_version_change,
+                source = mnfstnode,
+                target = bldnode.make_node(mnfstnode.path_from(chronode))
+            )
           
         #TODO copy "publish/chrome_store/_locales too
         #TODO copy icons too
         #TODO chrome specifics scripts too
 
 def doc(bld):
-  """automatically generates the documentation with jsdoc"""
-  #TODO : detection of jsdoc in the configuration
-  #TODO : generation of the doc during the build, one file at a time with proper dependency...
-  #TODO : auto display of the doc in a browser after generation
-  bldnode = bld.path.get_bld().find_node(bld.env.PORT)
-  if bldnode is None : bld.fatal(bld.env.PORT + " build directory not found. Please run ./waf build again.")
-  print bldnode.abspath()
+    """automatically generates the documentation with jsdoc"""
+    #TODO : detection of jsdoc in the configuration
+    #TODO : generation of the doc during the build, one file at a time with proper dependency...
+    #TODO : auto display of the doc in a browser after generation
+    bldnode = bld.path.get_bld().find_node(bld.env.PORT)
+    if bldnode is None : bld.fatal(bld.env.PORT + " build directory not found. Please run ./waf build again.")
+    print bldnode.abspath()
 
-  def docgen_task(task):
-    #src = task.inputs[0].abspath()
-    #tgt = task.outputs[0].abspath()
-    cmd = "sh gen_docs.sh"
-    print cmd
-    docnode = bld.path.get_src().find_dir("doc")
-    if docnode is None : bld.fatal("Cannot find doc/ subdirectory. doc generation aborted")
-    gendoc_proc = subprocess.Popen(shlex.split(cmd), cwd=docnode.abspath() ,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out,err = gendoc_proc.communicate()
-    if ( gendoc_proc.returncode != 0) :
-      if out is not None or err is not None: bld.fatal("Command Output: \n" + out + "Error : \n" + err)
-    return gendoc_proc.returncode
-  bld(  rule=docgen_task
-    #source=  #TODO : file to generate doc from
-    #target=  # TODO : where to put generated doc
-  )
+    def docgen_task(task):
+        #src = task.inputs[0].abspath()
+        #tgt = task.outputs[0].abspath()
+        cmd = "sh gen_docs.sh"
+        print cmd
+        docnode = bld.path.get_src().find_dir("doc")
+        if docnode is None : bld.fatal("Cannot find doc/ subdirectory. doc generation aborted")
+        gendoc_proc = subprocess.Popen(shlex.split(cmd), cwd=docnode.abspath() ,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out,err = gendoc_proc.communicate()
+        if ( gendoc_proc.returncode != 0) :
+            if out is not None or err is not None: bld.fatal("Command Output: \n" + out + "Error : \n" + err)
+        return gendoc_proc.returncode
+        bld(  rule=docgen_task
+            #source=  #TODO : file to generate doc from
+            #target=  # TODO : where to put generated doc
+        )
 
     
 def run(ctx): # this is a buildcontext
