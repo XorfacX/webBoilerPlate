@@ -16,6 +16,7 @@ depends/lz-string*
 .idea
 htdocs/css/_.css
 htdocs/css/nihilo
+htdocs/scripts/*.js
 htdocs/scripts/nls/dojo_*
 htdocs/scripts/resources
 htdocs/scripts/tests/*/
