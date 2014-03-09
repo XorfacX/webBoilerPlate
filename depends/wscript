@@ -20,7 +20,7 @@ DOJO_VERSION = "1.9.3"
 DOJO_URL = "http://download.dojotoolkit.org/release-" + DOJO_VERSION + "/dojo-release-" + DOJO_VERSION+ "-src.zip"
 DOJO_FILENAME = "dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_UNZIP = "dojo-release-" + DOJO_VERSION + "-src"
-DOJO_PROFILE = "dojo.profile.js"
+BUILD_PROFILE = "build.profile.js"
 
 #> https://raw.github.com/evilstreak/markdown-js/master/lib/markdown.js
 MARKDOWN_PARSER_FN="Markdown.Converter.js"
@@ -41,12 +41,11 @@ APACHE_CODEC_UNZIP="commons-codec-1.8"
 APACHE_CODEC_JAR="commons-codec-1.8.jar"
 
 #> http://pieroxy.net/blog/pages/lz-string/index.html
-LZSTRING_FILENAME="lz-string-1.3.3.js"
-LZSTRING_URL="https://raw.github.com/XorfacX/lz-string/master/libs/" + LZSTRING_FILENAME
+LZSTRING_FN="lz-string-1.3.3.js"
+LZSTRING_URL="https://raw.github.com/XorfacX/lz-string/master/libs/" + LZSTRING_FN
 
 top = '.'
 out = 'wbuild'
-
 
 def options(opt):
     """ Defines which option can be used for this project """
@@ -56,8 +55,9 @@ def options(opt):
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
+    conf.env.DEPENDS_FNS = []
     
-    #checking options        
+    #checking options
     if conf.options.engine not in ENGINES:
       conf.fatal("the --engine options is not recognized. It must be one of : " + ENGINES)  
     conf.env.ENGINE=conf.options.engine #setting up global variable
@@ -65,9 +65,9 @@ def configure(conf):
     if conf.options.platform not in PLATFORMS :
       conf.fatal("The platform " + conf.options.platform + " is unknown. Please use one of " + PLATFORMS)
     conf.env.PLATFORM=conf.options.platform #setting up global variable
-    
 
-  #MACROS
+
+    #MACROS
     def DL_web(url, filename) :
         """ Download url to filename if --download and needed """
         conf.start_msg("Checking for " + filename)
@@ -91,7 +91,7 @@ def configure(conf):
         else : conf.end_msg("ok", color="GREEN")
         return dldnode
     
-    def unzip(filename, expected_extract, specified_destination = conf.path.srcpath() ) :    
+    def unzip(filename, expected_extract, specified_destination = conf.path.srcpath() ) :
         conf.start_msg("Checking for " + expected_extract )
         unzipnode = conf.path.find_node(expected_extract)
         if unzipnode is None:
@@ -109,9 +109,19 @@ def configure(conf):
             if unzipnode is None : conf.fatal("ERROR : Expected " + expected_extract + " not found.")
         else : conf.end_msg("ok", color="GREEN")
         return unzipnode
-        
+   
+    def touch(fname, times=None):
+        with file(fname, 'a'):
+            os.utime(fname, times)
+    #end of MACROS
+
     #download Markdown 2 html parser
     DL_web(MARKDOWN_PARSER_URL,MARKDOWN_PARSER_FN)
+    conf.env.DEPENDS_FNS.append(MARKDOWN_PARSER_FN)
+
+    #download LZ-String
+    DL_web(LZSTRING_URL,LZSTRING_FN)
+    conf.env.DEPENDS_FNS.append(LZSTRING_FN)
     
     if conf.env.PLATFORM == 'android' :
         #download cordova for mobile packaging
@@ -249,27 +259,26 @@ def configure(conf):
                     conf.fatal("Command Output : \n" + out + "Error :\n" + err)
         else :
             conf.end_msg( jarnode.relpath(),"GREEN")
-    #end of android specific config
-        
+    #end of conf.env.PLATFORM
+
+
     if conf.env.ENGINE == "dojo" :
 
         DL_web(DOJO_URL,DOJO_FILENAME)
         dojonode = unzip(DOJO_FILENAME,DOJO_UNZIP)
-        
-        #post condition    
-        if dojonode is None: conf.fatal("The dojo toolkit was not detected and could not be downloaded. Please connect to internet and run 'waf configure' again")
-        else : conf.env.DOJOPATH = dojonode.abspath()
+        conf.env.DOJOPATH = dojonode.abspath()
     
         #check if a profile exists
-        conf.start_msg("Checking for dojo profile")
-        profnode = conf.path.find_node(DOJO_PROFILE)
+        conf.start_msg("Checking for build profile")
+        profnode = conf.path.find_node(BUILD_PROFILE)
         if profnode is None : # if not creates it
             conf.end_msg("failed", color="RED")
-            subprocess.call(shlex.split("touch " + DOJO_PROFILE ))
-            if conf.path.find_node(DOJO_PROFILE) is None : conf.fatal("Unable to create dojo build profile : " + DOJO_PROFILE)
-            else: conf.msg(DOJO_PROFILE + " created")
-        else : conf.end_msg("ok",color="GREEN")    
+            touch(BUILD_PROFILE)
+            if conf.path.find_node(BUILD_PROFILE) is None : conf.fatal("Unable to create build profile : " + BUILD_PROFILE)
+            else: conf.msg("Blank " + BUILD_PROFILE + " created")
+        else : conf.end_msg("ok",color="GREEN")
 
-    else : # no engine required ( ?? -> default should be dojo)
+    else : # NOT POSSIBLE, default should be dojo
         conf.fatal("SHOULD NOT REACH HERE")
         pass
+    #end of conf.env.ENGINE
