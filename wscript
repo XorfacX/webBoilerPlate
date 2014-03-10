@@ -1,13 +1,10 @@
 # How to use
 # ==========
-# - On Unix
-#   > ./waf configure --download --engine=[dojo]
-#   > ./waf build [modules / tests] -> TO BE DEFINED
-#   > ./waf install
-#   > ./waf dist_[chrome]
-#
-# Concept:
-#
+#   ./waf configure --download --engine=[dojo] --platform=[android|local|chrome|owa]
+#   ./waf build --partialBuild
+#   ./waf install
+#   ./waf dist_[chrome]
+
 
 import sys;
 import os;
@@ -40,9 +37,11 @@ jsOut = '_release' #JS build folder name
 
 
 def options(opt):
-  """ Defines which option can be used for this project """
-  opt.recurse('depends')
-  opt.recurse('tools')
+    """ Defines which option can be used for this project """
+    opt.recurse('depends')
+    opt.recurse('tools')
+    
+    opt.add_option('--buildPartial', action='store_true', default=False, help='do not rebuild the app if build folder is present [default: \'True\']')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -305,6 +304,27 @@ def build(bld):
         if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
+        #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
+        def buildApp(profnode):
+            bld.start_msg("Building " + profnode.relpath() )
+            bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
+            buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
+            app_build_proc = subprocess.Popen(
+            shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
+            cwd= bsnode.abspath(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+            )
+            out,err = app_build_proc.communicate()
+            if app_build_proc.returncode == 0 :
+                bld.to_log(out)
+                bld.to_log(err)
+                bld.end_msg( "OK","GREEN")
+                return True;
+            else :
+                bld.end_msg("failed","RED")
+                bld.fatal("Command Output : \n" + out + "Error :\n" + err)
+
 
         #define how to copy dojo components. source and target needs to be in the dojolayer. everything else is relative to it
         def cp_dojo_task(task):
@@ -349,50 +369,34 @@ def build(bld):
 
         #building app but remove already built first
         appBuild_dir = scripts_dir.find_dir(jsOut)
-
-        if appBuild_dir is not None :
-            bld.start_msg("App already built, removing ... ")
-            shutil.rmtree(appBuild_dir.abspath())
-            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
-            bld.end_msg( "OK","GREEN")
-
-        #build App http://livedocs.dojotoolkit.org/build/buildSystem
-        bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
-        buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
-        bld.start_msg("Building " + profnode.relpath() )
-        app_build_proc = subprocess.Popen(
-        shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
-        cwd= bsnode.abspath(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-        )
-        out,err = app_build_proc.communicate()
-        if app_build_proc.returncode == 0 :
-            bld.to_log(out)
-            bld.to_log(err)
-            ##finding the mandatory dojo layer
-            #appBuild_dir = dojonode.make_node(jsOut)
-            ##needed to create folders on windows
-            #if not os.path.exists(appBuild_dir.abspath()) :
-            #    appBuild_dir.mkdir()
-            #dojobuildnode = appBuild_dir.make_node("dojo_build")
-            #if not os.path.exists(dojobuildnode.abspath()) :
-            #    dojobuildnode.mkdir()
-            bld.end_msg( appBuild_dir.relpath(),"GREEN")
-        else :
-            bld.end_msg("failed","RED")
-            bld.fatal("Command Output : \n" + out + "Error :\n" + err)
-
+        appIsBuilt = appBuild_dir is not None
+        if bld.options.buildPartial:
+            if not appIsBuilt:
+                buildApp(profnode)
+        else:
+            if appIsBuilt:
+                #print "Removing App build folder"
+                shutil.rmtree(appBuild_dir.abspath())
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
+            buildApp(profnode)
 
         #finding dojo mandatory layer and copying only what we need
         dojobuildnode = appBuild_dir.find_dir('dojo')
         if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
-        dojobaselayer = dojobuildnode.find_node("dojo/dojo.js")
-        if dojobaselayer is None : bld.fatal("dojo/dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
-        dojobaselayer_uc = dojobuildnode.find_node("dojo/dojo.js.uncompressed.js")
-        if dojobaselayer_uc is None : bld.fatal("dojo/dojo.js.uncompressed.js base layer was not found in build directory. Cannot continue.")
+        dojobaselayer = dojobuildnode.find_node("dojo.js")
+        if dojobaselayer is None : bld.fatal("dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
+        dojobaselayer_uc = dojobuildnode.find_node("dojo.js.uncompressed.js")
+        if dojobaselayer_uc is None : bld.fatal("dojo.js.uncompressed.js base layer was not found in build directory. Cannot continue.")
 #        dojoxmobilethemechooser = dojobuildnode.find_node("dojox/mobile/deviceTheme.js")
 #        if dojoxmobilethemechooser is None : bld.fatal("dojox/mobile/deviceTheme.js mandatory base layer was not found in build directory. Cannot continue.")
+
+        #create dirs 
+        for folder in ['scripts/app', 'scripts/dojo']:
+          foldernode = bldnode.make_node(folder)
+          foldernode.mkdir()
+          if bld.env.PLATFORM == 'android' :
+            androidfoldernode = assetswww_dir.make_node(folder)
+            androidfoldernode.mkdir()
                 
         #copying mandatory dojo layer
         bld.start_msg("Extracting Dojo built layer" )
@@ -408,7 +412,7 @@ def build(bld):
 
         #extracting dojo resources
         bld.start_msg("Extracting Dojo resources" )
-        dojoresnode = dojonode.find_dir("dojo/resources")
+        dojoresnode = dojonode.find_dir("resources")
         if dojoresnode is not None :
             scriptsresnode = scriptsnode.make_node("resources")
             if os.path.exists(scriptsresnode.abspath()) :
@@ -418,8 +422,8 @@ def build(bld):
         bld.end_msg(scriptsresnode.relpath())
     
         #extracting localization resources
-        dojonls = dojobuildnode.find_node("dojo/nls")
-        if dojonls is None : bld.fatal("dojo/nls for mandatory base layer was not found in build directory. Cannot continue.")
+        dojonls = dojobuildnode.find_node("nls")
+        if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
         bld.start_msg( "Extracting Localization resources ")
         scriptsdnlsnode = scriptsnode.make_node("nls")
         scriptsdnlsnode.mkdir()
@@ -433,38 +437,36 @@ def build(bld):
         #copying dijit nls as its not working though profile bug #248006
         bld.start_msg( "Copying dijit nls ")
         for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
-            dcnode = dojobuildnode.get_src().find_node(dcmpnt)
-            if dcnode is None : bld.fatal(os.path.join(dojobuildnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
+            dcnode = appBuild_dir.get_src().find_node(dcmpnt)
+            if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
             srccp = dcnode.get_src().abspath();
-            tgtcp = scriptsnode.make_node(dcnode.path_from(dojobuildnode)).abspath();
+            tgtcp = scriptsnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
             if not os.path.exists(os.path.dirname(tgtcp)) :
                 os.makedirs(os.path.dirname(tgtcp))
             res = shutil.copy(srccp,tgtcp)
         bld.end_msg( 'ok' )
 
-        #create dirs 
-        for folder in ['scripts/app', 'scripts/dojo']:
-          foldernode = bldnode.make_node(folder)
-          foldernode.mkdir()
-          if bld.env.PLATFORM == 'android' :
-            androidfoldernode = assetswww_dir.make_node(folder)
-            androidfoldernode.mkdir() 
+        #TODO copy built dijit Theme
+        #TODO build and copy dojox mobile themes
+ 
         
         #copy content
         for folder in ['audio','content','css','dojox', 'fonts','images']:
-            _destDir = os.path.join(bldnode.abspath(), folder)
-            if os.path.exists(_destDir) :
-              shutil.rmtree(_destDir) #remove existing dir 
-              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-            shutil.copytree(os.path.join(htdocs_dir.abspath(),folder), _destDir)
-            
-            if bld.env.PLATFORM == 'android' :
-                _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
-                if os.path.exists(_android_destDir) :
-                  shutil.rmtree(_android_destDir) #remove existing dir 
+            _srcDir = os.path.join(htdocs_dir.abspath(),folder)
+            if os.path.exists(_srcDir): #do nothing when source doesnt exists, this allow a more permissive folder list definition
+                _destDir = os.path.join(bldnode.abspath(), folder)
+                if os.path.exists(_destDir):
+                  shutil.rmtree(_destDir) #remove existing dir 
                   if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
+                shutil.copytree(_srcDir, _destDir)
 
+                if bld.env.PLATFORM == 'android' :
+                    _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
+                    if os.path.exists(_android_destDir) :
+                      shutil.rmtree(_android_destDir) #remove existing dir 
+                      if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                    shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
+        
 #        # handle images/
 #        for img in htdocs_dir.get_src().ant_glob('images/**/*.png images/**/*.gif images/**/*.jpg'): # find images files
 #          bld(

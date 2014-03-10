@@ -13,11 +13,13 @@ It uses:
 
 HowTo
 ---
-./waf configure --download   
-./waf build   
+./waf configure --download --engine=[dojo] --platform=[android|local|chrome|owa]   
+./waf build --partialBuild   
+./waf dist_[chrome]   
 ./waf distclean
 
 
 Dependencies
 ---
-Python >2.6 <3 to be able to execute waf script (TODO update to python 3)
+Python >2.6 <3 to be able to execute waf script (TODO update to python 3)   
+NodeJS for mobile packaging though Apache Cordova
