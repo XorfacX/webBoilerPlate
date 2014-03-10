@@ -84,6 +84,21 @@ def configure(conf):
 
     #handling ENGINE
     if conf.env.ENGINE == "dojo":
+        #extracting dijit themes
+        dijitthemes = scriptsnode.find_node("dijit/themes")
+        if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
+        conf.start_msg( "Extracting Dijit Themes ")
+        cssNode = htdocsnode.find_node("css")
+        #copying dijit themes (not built)
+        for tname in DIJIT_THEMES :
+            thdir = dijitthemes.find_dir(tname)
+            if thdir is not None :
+                cssThDir = cssNode.make_node(tname)
+                if os.path.exists(cssThDir.abspath()) :
+                    shutil.rmtree(cssThDir.abspath())
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                shutil.copytree (thdir.abspath(), cssThDir.abspath() )
+        conf.end_msg( cssNode.relpath() )
 
         # Copying doh for testing purposes into our tests directory
         testsnode =  conf.path.find_dir('tests')
@@ -95,7 +110,7 @@ def configure(conf):
             conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
             if os.path.exists(dohdstnode.relpath()) :
                 shutil.rmtree(dohdstnode.relpath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
             shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
             conf.end_msg( "ok" )
         #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
@@ -116,10 +131,11 @@ def configure(conf):
         
             conf.start_msg( "Extracting Dojox Mobile Themes ")
             dmblthemes_build = scriptsnode.find_node("dojox/mobile/themes")
-            if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")        
+            if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")
+            htdocsDojoxNode = htdocsnode.make_node("dojox");
             dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
-            if os.path.exists(dmbltnode.abspath()) : #remove existing dojox dir
-                shutil.rmtree(dmbltnode.abspath(), 1)
+            if os.path.exists(htdocsDojoxNode.abspath()) : #remove existing dojox dir
+                shutil.rmtree(htdocsDojoxNode.abspath(), 1)
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
             dmbltnode.mkdir()
             for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
@@ -388,7 +404,7 @@ def build(bld):
         bld.end_msg( scriptsnode.find_node(dojobaselayer.path_from(dojobuildnode)).relpath())
         bld.start_msg("Extracting Dojo built layer - uncompressed" )
         shutil.copy(dojobaselayer_uc.abspath(),scriptsnode.make_node(dojobaselayer_uc.path_from(dojobuildnode)).abspath())
-        bld.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())        
+        bld.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())
 
         #create dirs 
         for folder in ['scripts/app', 'scripts/dojo']:
