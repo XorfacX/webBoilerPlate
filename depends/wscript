@@ -293,3 +293,7 @@ def configure(conf):
         conf.fatal("SHOULD NOT REACH HERE")
         pass
     #end of conf.env.ENGINE
+
+def build(bld):
+    bld.env.DOJO_UNZIP = DOJO_UNZIP
+    bld.env.BUILD_PROFILE = BUILD_PROFILE
