@@ -614,7 +614,9 @@ def build(bld):
                       source=dojo_layer.get_src(),
                       target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
           )
-        
+
+
+        #TODO compile everything inside script folder
         #markdown.js
         markdown = scripts_dir.get_src().find_node('Markdown.Converter.js')
         bld(
@@ -629,7 +631,6 @@ def build(bld):
                 source = bldnode.make_node(markdown.path_from(htdocs_dir)),
                 target = assetswww_dir.make_node(markdown.path_from(htdocs_dir))
             )
-            #cbuild_task(bldnode.make_node(markdown.path_from(htdocs_dir)).abspath(), assetswww_dir.make_node(markdown.path_from(htdocs_dir)).abspath(),False)
                     
         #Compile app src files
         for js in app_dir.get_src().ant_glob('*.js'):
@@ -638,34 +639,13 @@ def build(bld):
             source = js.get_src(),
             target = bldnode.make_node(js.path_from(htdocs_dir))
           )
-          #cbuild_task(js.get_src().abspath(), bldnode.make_node(js.path_from(htdocs_dir)).abspath() ) # advanced compilation doesn't work right now, find a way to fix that if needed
           if bld.env.PLATFORM == 'android' :
               bld(
                 rule = cbuild_task,
                 source = bldnode.make_node(js.path_from(htdocs_dir)),
                 target = assetswww_dir.make_node(js.path_from(htdocs_dir))
               )
-              #cbuild_task(bldnode.make_node(js.path_from(htdocs_dir)).abspath(),assetswww_dir.make_node(js.path_from(htdocs_dir)).abspath() ) # advanced compilation doesn't work right now, find a way to fix that if needed
           
-          
-          
-        #Compile src files into one single file #waf script does work but not final file app.js
-#        srcs = ""
-#        for js in app_dir.get_src().ant_glob('*.js'):     # find source files
-#          srcs = " --js \"" + js.abspath() + "\"" + srcs
-#        
-#        dest = bldnode.make_node(app_dir.get_src().find_node('app.js').path_from(htdocs_dir)).abspath()
-#        cbuild_proc = subprocess.Popen(shlex.split("java -jar \"" + bld.env.COMPILER_PATH + "\" --compilation_level ADVANCED_OPTIMIZATIONS" + srcs + " --js_output_file \"" + dest + "\" --warning_level DEFAULT"), cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-#        out,err = cbuild_proc.communicate()
-#
-#        if ( cbuild_proc.returncode != 0 ) :
-#          bld.fatal("Closure Compiler failed. Return Code: " + cbuild_proc.returncode + " Error : \n" + err )
-#        else :
-#          if out is not None and out.strip() != "" :
-#            print out
-#          if err is not None and err.strip() != "" :
-#            print err         
-        
     else : bld.fatal("ENGINE has to be dojo. Please run \'./waf configure [ --engine= [ dojo ] ]\'")
   
     if bld.env.PLATFORM == 'android' : 
