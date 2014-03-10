@@ -406,6 +406,42 @@ def build(bld):
         shutil.copy(dojobaselayer_uc.abspath(),scriptsnode.make_node(dojobaselayer_uc.path_from(dojobuildnode)).abspath())
         bld.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())
 
+        #extracting dojo resources
+        bld.start_msg("Extracting Dojo resources" )
+        dojoresnode = dojonode.find_dir("dojo/resources")
+        if dojoresnode is not None :
+            scriptsresnode = scriptsnode.make_node("resources")
+            if os.path.exists(scriptsresnode.abspath()) :
+                shutil.rmtree(scriptsresnode.abspath())
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+            shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
+        bld.end_msg(scriptsresnode.relpath())
+    
+        #extracting localization resources
+        dojonls = dojobuildnode.find_node("dojo/nls")
+        if dojonls is None : bld.fatal("dojo/nls for mandatory base layer was not found in build directory. Cannot continue.")
+        bld.start_msg( "Extracting Localization resources ")
+        scriptsdnlsnode = scriptsnode.make_node("nls")
+        scriptsdnlsnode.mkdir()
+
+        #copying localization resources from the build ( excluding default copied file by dojo build process )
+        for fname in dojonls.ant_glob("dojo_*") :
+            if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 :
+                shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
+        bld.end_msg( scriptsdnlsnode.relpath() )
+        
+        #copying dijit nls as its not working though profile bug #248006
+        bld.start_msg( "Copying dijit nls ")
+        for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
+            dcnode = dojobuildnode.get_src().find_node(dcmpnt)
+            if dcnode is None : bld.fatal(os.path.join(dojobuildnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
+            srccp = dcnode.get_src().abspath();
+            tgtcp = scriptsnode.make_node(dcnode.path_from(dojobuildnode)).abspath();
+            if not os.path.exists(os.path.dirname(tgtcp)) :
+                os.makedirs(os.path.dirname(tgtcp))
+            res = shutil.copy(srccp,tgtcp)
+        bld.end_msg( 'ok' )
+
         #create dirs 
         for folder in ['scripts/app', 'scripts/dojo']:
           foldernode = bldnode.make_node(folder)
