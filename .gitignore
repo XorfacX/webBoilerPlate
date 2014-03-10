@@ -30,4 +30,5 @@ publish/android/**/
 materials/wip
 htdocs/Web*.config
 htdocs/scripts/_release
-
+*.msi
+*.exe
