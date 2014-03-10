@@ -90,30 +90,51 @@ def configure(conf):
         conf.start_msg("Checking Cordova Project")
         cordova_create_node = conf.path.find_node(conf.env.CORDOVA_PATH).find_node("bin").find_node("create")
         if cordova_create_node is None : conf.fatal("bin/create was not found in " + conf.env.CORDOVA_PATH + ". Cannot continue.")
+
+
+        #nodeJS detection
+        def detect_nodeJS() :
+            conf.start_msg("=> NodeJS bin/ should be in your PATH")
+            ant_detect = subprocess.Popen(
+                "node -v",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,
+            )
+            out,err = ant_detect.communicate()
+            if ant_detect.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                conf.end_msg("ok","GREEN")
+                return True;
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
         
         android_pub_node = conf.path.find_node("publish").find_node("android")
         android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
         if android_pub_node is None : conf.fatal("Cannot find publish/android path")
         if android_proj_node is None :
             conf.end_msg("failed","RED")
-            conf.start_msg("Building Cordova Project")
-            #NEEDS NODE.JS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
-            cordova_create_proc = subprocess.Popen(
-                cordova_create_node.abspath() + " " + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + " " + ANDROID_PACKAGE + " " + ANDROID_PROJECT,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True
-            )
-            out,err = cordova_create_proc.communicate()
-            if cordova_create_proc.returncode == 0 :
-                conf.to_log(out)
-                conf.to_log(err)
-                android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
-                if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found");
-                conf.end_msg( android_proj_node.relpath(),"GREEN")
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+            #detecting nodeJS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
+            if detect_nodeJS():
+                conf.start_msg("Building Cordova Project")
+                cordova_create_proc = subprocess.Popen(
+                    cordova_create_node.abspath() + " " + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + " " + ANDROID_PACKAGE + " " + ANDROID_PROJECT,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True
+                )
+                out,err = cordova_create_proc.communicate()
+                if cordova_create_proc.returncode == 0 :
+                    conf.to_log(out)
+                    conf.to_log(err)
+                    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
+                    if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found");
+                    conf.end_msg( android_proj_node.relpath(),"GREEN")
+                else :
+                    conf.end_msg("failed","RED")
+                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
         else :
             conf.end_msg("ok","GREEN")
   
