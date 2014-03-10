@@ -26,9 +26,11 @@ htdocs/scripts/dojo.*
 htdocs/scripts/dijit
 htdocs/scripts/dojox
 htdocs/scripts/util
+htdocs/dojox
 publish/android/**/
 materials/wip
 htdocs/Web*.config
 htdocs/scripts/_release
+doh
 *.msi
 *.exe
