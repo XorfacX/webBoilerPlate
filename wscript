@@ -74,7 +74,7 @@ def configure(conf):
                 dst_file = os.path.join(scriptsnode.abspath(), file)
                 if os.path.exists(dst_file) : #remove existing dir
                     shutil.rmtree(dst_file)
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
                 shutil.move(src_file, dst_file)
             conf.end_msg(scriptsnode.relpath() + " : " + ', '.join(files)) # scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
         else : #FILE HANDLING
@@ -95,7 +95,7 @@ def configure(conf):
             conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
             if os.path.exists(dohdstnode.relpath()) :
                 shutil.rmtree(dohdstnode.relpath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
             shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
             conf.end_msg( "ok" )
         #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
@@ -120,7 +120,7 @@ def configure(conf):
             dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
             if os.path.exists(dmbltnode.abspath()) : #remove existing dojox dir
                 shutil.rmtree(dmbltnode.abspath(), 1)
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
             dmbltnode.mkdir()
             for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
                 thdir = dmblthemes_build.find_dir(ftname)
@@ -139,7 +139,7 @@ def configure(conf):
                                 thimagesnode = thnode.make_node("images")
                                 if os.path.exists(thimagesnode.abspath()) : #remove existing images dir
                                     shutil.rmtree(thimagesnode.abspath())
-                                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
                                 shutil.copytree (thimg.abspath(), thimagesnode.abspath() )
                   
                             #ipad specific from iphone theme
@@ -216,7 +216,7 @@ def configure(conf):
           if delnode is not None :
               if os.path.isdir(delnode.relpath()) : 
                   shutil.rmtree(delnode.relpath(),True)
-                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
               elif os.path.isfile(delnode.relpath()) :
                   os.remove(delnode.relpath())
     # end of conf.env.PLATFORM == 'android'
@@ -337,12 +337,12 @@ def build(bld):
         if appBuild_dir is not None :
             bld.start_msg("App already built, removing ... ")
             shutil.rmtree(appBuild_dir.abspath())
-            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
+            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
             bld.end_msg( "OK","GREEN")
 
         #build App http://livedocs.dojotoolkit.org/build/buildSystem
         bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
-        buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows')        else "sh build.sh"        
+        buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
         bld.start_msg("Building " + profnode.relpath() )
         app_build_proc = subprocess.Popen(
         shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
@@ -369,7 +369,7 @@ def build(bld):
 
 
         #finding dojo mandatory layer and copying only what we need
-        dojobuildnode = appBuild_dir.find_dir(jsOut)
+        dojobuildnode = appBuild_dir.find_dir('dojo')
         if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
         dojobaselayer = dojobuildnode.find_node("dojo/dojo.js")
         if dojobaselayer is None : bld.fatal("dojo/dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
@@ -403,14 +403,14 @@ def build(bld):
             _destDir = os.path.join(bldnode.abspath(), folder)
             if os.path.exists(_destDir) :
               shutil.rmtree(_destDir) #remove existing dir 
-              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
             shutil.copytree(os.path.join(htdocs_dir.abspath(),folder), _destDir)
             
             if bld.env.PLATFORM == 'android' :
                 _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
                 if os.path.exists(_android_destDir) :
                   shutil.rmtree(_android_destDir) #remove existing dir 
-                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
                 shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
 
 #        # handle images/
@@ -504,30 +504,30 @@ def build(bld):
 #        dojox_destDir = os.path.join(bldnode.abspath(), "dojox")
 #        if os.path.exists(dojox_destDir) :
 #          shutil.rmtree(dojox_destDir) #remove existing dir
-#          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+#          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
 #        shutil.copytree(os.path.join(htdocs_dir.abspath(),'dojox'), dojox_destDir)
 #        #BUG HERE if the dir is present, the removal is not fast enough at least on windows and the waf build command must be run another time ...
 #        if bld.env.PLATFORM == 'android' :
 #            dojox_android_destDir = os.path.join(assetswww_dir.abspath(), "dojox")
 #            if os.path.exists(dojox_android_destDir) :
 #              shutil.rmtree(dojox_android_destDir) #remove existing dir
-#              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+#              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
 #            shutil.copytree(dojox_destDir, dojox_android_destDir)
 #        
         
-        #html files
-        for html in htdocs_dir.get_src().ant_glob('*.html *.txt *.php'):      # find static files
+        #static files
+        for static in htdocs_dir.get_src().ant_glob('*.static *.txt *.php'):      # find static files
           bld(
             rule=cp_task,
-            source=html.get_src(),
-            target=bldnode.make_node(html.path_from(htdocs_dir))
+            source=static.get_src(),
+            target=bldnode.make_node(static.path_from(htdocs_dir))
           )# copy them to the build directory
           if bld.env.PLATFORM == 'android' :
               #copying
               bld(
                 rule=cp_task,
-                source=bldnode.make_node(html.path_from(htdocs_dir)),
-                target=assetswww_dir.make_node(html.path_from(htdocs_dir))
+                source=bldnode.make_node(static.path_from(htdocs_dir)),
+                target=assetswww_dir.make_node(static.path_from(htdocs_dir))
               )
         
         #dojo        
