@@ -387,14 +387,14 @@ def build(bld):
                 dojonls = dojobuildnode.find_node("nls")
                 if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
                 print "Extracting Dojo Localization resources"
-                scriptsdnlsnode = bldscriptsnode.make_node("dojo").make_node("nls")
-                scriptsdnlsnode.mkdir()
+                bldscriptsdnlsnode = bldscriptsnode.make_node("dojo").make_node("nls")
+                bldscriptsdnlsnode.mkdir()
                 #copying localization resources from the build ( excluding default copied file by dojo build process )
                 for fname in dojonls.ant_glob("dojo_*") :
                     if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
-                        shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
+                        shutil.copy( fname.abspath(), bldscriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
-                            shutil.copytree(dojonls.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
+                            shutil.copytree(bldscriptsdnlsnode.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
         
                 #copying dijit nls as its not working though profile bug #248006
                 print "Extracting Dijit Localization resources"
@@ -415,19 +415,37 @@ def build(bld):
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
                 if dijitbuildthemes is None : bld.fatal("Dijit themes directory was not found in build directory. Cannot continue.")
                 print "Extracting Dijit Themes"
-                cssNode = bldnode.make_node("css")
+                bldCssNode = bldnode.make_node("css")
                 #copying dijit themes (not built)
                 for tname in DIJIT_THEMES :
-                    thdir = dijitbuildthemes.find_dir(tname)
-                    #print thdir.abspath()
-                    if thdir is not None :
-                        cssThDir = cssNode.make_node(tname)
-                        #print cssThDir.abspath()
-                        if os.path.exists(cssThDir.abspath()) :
-                            shutil.rmtree(cssThDir.abspath())
+                    _thdir = dijitbuildthemes.find_dir(tname)
+                    #print _thdir.abspath()
+                    if _thdir is not None :
+                        bldCssThNode = bldCssNode.make_node(tname)
+                        #print bldCssThNode.abspath()
+                        if os.path.exists(bldCssThNode.abspath()) :
+                            shutil.rmtree(bldCssThNode.abspath())
                             if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                        shutil.copytree (thdir.abspath(), cssThDir.abspath() )
-                        #TODO android
+                        #print _thdir.find_node(tname + ".css").abspath()
+                        #print bldCssThNode.abspath()
+                        bldCssThNode.mkdir()
+                        shutil.copy(_thdir.find_node(tname + ".css").abspath(), bldCssThNode.abspath() )
+
+                        _thimg = _thdir.find_dir("images")
+                        if _thimg is not None :
+                            bldCssThImgsNode = bldCssThNode.make_node("images")
+                            if os.path.exists(bldCssThImgsNode.abspath()) :
+                                shutil.rmtree(bldCssThImgsNode.abspath())
+                                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                            shutil.copytree (_thimg.abspath(), bldCssThImgsNode.abspath() )
+
+                        if bld.env.PLATFORM == 'android' :
+                            #print assetswww_dir.make_node("css").make_node(tname).abspath()
+                            assetswwwCssThemeNode = assetswww_dir.make_node("css").make_node(tname)
+                            if os.path.exists(assetswwwCssThemeNode.abspath()) :
+                                shutil.rmtree(assetswwwCssThemeNode.abspath())
+                                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                            shutil.copytree(bldCssThNode.abspath(), assetswwwCssThemeNode.abspath())
 
             if bld.env.PLATFORM == 'android' :
                 #TODO build and copy dojox mobile themes
@@ -458,7 +476,7 @@ def build(bld):
             buildApp(profnode)
 
         #copy dojo task call
-        bld( rule = cpBuild )
+        bld( rule = cpBuild ) #TODO look if we must set this task call to precede android build task
         
         #static files
         statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 
