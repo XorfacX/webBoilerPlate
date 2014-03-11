@@ -588,24 +588,19 @@ def build(bld):
         )
 
     elif bld.env.PLATFORM == 'chrome' :
-        ###Creating manifest needed for chrome
-        chronode = bld.path.get_src().find_dir("publish/chrome_store") # find chrome_store folder
+        # find chrome_store folder
+        chronode = bld.path.get_src().find_dir("publish/chrome_store")
         if chronode is None : # TODO : setup basic chrome_store structure
-          bld.fatal("chrome_store not found")
+            bld.fatal("chrome_store not found")
+            
+          #manifest version change task
         def mnfst_version_change(task):
             src = task.inputs[0]
             tg = task.outputs[0].abspath()
-            
             #get git commits count http://stackoverflow.com/questions/677436/how-to-get-the-git-commit-count
             git_count_proc = subprocess.Popen(shlex.split("git rev-list HEAD --count"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out,err = git_count_proccommunicate()
+            out,err = git_count_proc.communicate()
             if git_count_proc.returncode != 0 : bld.fatal("Cannot determine current git count to set version.")
-            
-            ##get bzr rev info
-            #bzr_rev_proc = subprocess.Popen(shlex.split("bzr revno"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            #out,err = bzr_rev_proc.communicate()
-            #if bzr_rev_proc.returncode != 0 : bld.fatal("Cannot determine current bzr revno to set version.")
-
             else :
                 mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
                 mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
@@ -616,18 +611,52 @@ def build(bld):
             mnfst_bld_file.write(mnfst_str)
             mnfst_bld_file.close()
             return 0
-        #looking fo manifest.json
+            
+        #manifest.json needed for chrome
         mnfstnode = chronode.find_node("manifest.json")
         if mnfstnode is None : bld.fatal("manifest.json not found")
         else :
-            bld(rule=mnfst_version_change,
+            bld(
+                rule=mnfst_version_change,
                 source = mnfstnode,
                 target = bldnode.make_node(mnfstnode.path_from(chronode))
             )
-          
-        #TODO copy "publish/chrome_store/_locales too
-        #TODO copy icons too
-        #TODO chrome specifics scripts too
+        
+        #Environment.js concat with chrome specific
+        baseEnvNode = scripts_dir.get_src().find_node(ENV_FN)
+        chroEnvNode = chronode.find_node(ENV_FN)        
+        if chroEnvNode is not None :
+            if baseEnvNode is None :
+                shutil.copy(chroEnvNode.abspath(),bldnode.make_node(chroEnvNode.path_from(chronode)).abspath())
+            else :
+                with file(chroEnvNode.abspath()) as chrof:
+                    chroEnvFile = chrof.read()
+                    with open(baseEnvNode.abspath()) as basef:
+                        baseEnvFile = basef.read()
+                        unbuiltEnv_node = bldnode.make_node(ENV_FN)   # +'.uc.js')
+                        with open(unbuiltEnv_node.abspath(), "w") as unbuitEnvFile:
+                            unbuitEnvFile.write(baseEnvFile)
+                            unbuitEnvFile.write(chroEnvFile)
+                            
+                        #TODO BUILD unbuiltEnv_node here
+        
+        #copying chrome publish files
+        for cpfiles in ['_locales','ico16.png','ico128.png'] :
+            cpnode = chronode.get_src().find_node(cpfiles)
+            if cpnode is None : bld.fatal(os.path.join(cpnode.get_src().relpath(),cpfiles) + " not found. Aborting.")
+            if os.path.isdir(cpnode.abspath()) :
+                bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
+                if os.path.exists(bld_cpnode.abspath()) :
+                    shutil.rmtree(bld_cpnode.abspath())
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
+            else :
+                srccp = cpnode.get_src().abspath();
+                tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath();
+                if not os.path.exists(os.path.dirname(tgtcp)) :
+                    os.makedirs(os.path.dirname(tgtcp))
+                res = shutil.copy(srccp,tgtcp)
+        return res
 
 def doc(bld):
     """automatically generates the documentation with jsdoc"""
