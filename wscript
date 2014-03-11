@@ -26,7 +26,8 @@ ENGINES = 'dojo'  #nb: we should think about cleaning this from here or from dep
 ANDROID_PACKAGE = "com.fairydwarves.webboilerplate" #set your android package identifier when applicable
 ANDROID_PROJECT = "webBoilerPlate" #set your android app name when applicable
 
-DIJIT_THEMES = ['nihilo'] #set the list of dojo themes we want to build
+DIJIT = 1 #do we use dijit ?
+DIJIT_THEMES = ['nihilo'] #set the list of dijit themes we want to build
 
 BUILDTYPES = 'debug release'
 WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder deletion to occur
@@ -85,21 +86,22 @@ def configure(conf):
 
     #handling ENGINE
     if conf.env.ENGINE == "dojo":
-        #extracting dijit themes
-        dijitthemes = scriptsnode.find_node("dijit/themes")
-        if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
-        conf.start_msg( "Extracting Dijit Themes ")
-        cssNode = htdocsnode.find_node("css")
-        #copying dijit themes (not built)
-        for tname in DIJIT_THEMES :
-            thdir = dijitthemes.find_dir(tname)
-            if thdir is not None :
-                cssThDir = cssNode.make_node(tname)
-                if os.path.exists(cssThDir.abspath()) :
-                    shutil.rmtree(cssThDir.abspath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                shutil.copytree (thdir.abspath(), cssThDir.abspath() )
-        conf.end_msg( cssNode.relpath() )
+        if DIJIT :
+            #extracting dijit themes
+            dijitthemes = scriptsnode.find_node("dijit/themes")
+            if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
+            conf.start_msg( "Extracting Dijit Themes ")
+            cssNode = htdocsnode.find_node("css")
+            #copying dijit themes (not built)
+            for tname in DIJIT_THEMES :
+                thdir = dijitthemes.find_dir(tname)
+                if thdir is not None :
+                    cssThDir = cssNode.make_node(tname)
+                    if os.path.exists(cssThDir.abspath()) :
+                        shutil.rmtree(cssThDir.abspath())
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                    shutil.copytree (thdir.abspath(), cssThDir.abspath() )
+            conf.end_msg( cssNode.relpath() )
 
         # Copying doh for testing purposes into our tests directory
         testsnode =  conf.path.find_dir('tests')
@@ -414,32 +416,34 @@ def build(bld):
             shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
         bld.end_msg(scriptsresnode.relpath())
     
-        #extracting localization resources
-        dojonls = dojobuildnode.find_node("nls")
-        if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
-        bld.start_msg( "Extracting Localization resources ")
-        scriptsdnlsnode = bldnode.make_node("nls")
-        scriptsdnlsnode.mkdir()
+        if DIJIT :
+            #extracting localization resources
+            dojonls = dojobuildnode.find_node("nls")
+            if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
+            bld.start_msg( "Extracting Localization resources ")
+            scriptsdnlsnode = bldnode.make_node("nls")
+            scriptsdnlsnode.mkdir()
 
-        #copying localization resources from the build ( excluding default copied file by dojo build process )
-        for fname in dojonls.ant_glob("dojo_*") :
-            if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 :
-                shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
-        bld.end_msg( scriptsdnlsnode.relpath() )
+            #copying localization resources from the build ( excluding default copied file by dojo build process )
+            for fname in dojonls.ant_glob("dojo_*") :
+                if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 :
+                    shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
+            bld.end_msg( scriptsdnlsnode.relpath() )
         
-        #copying dijit nls as its not working though profile bug #248006
-        bld.start_msg( "Copying dijit nls ")
-        for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
-            dcnode = appBuild_dir.get_src().find_node(dcmpnt)
-            if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-            srccp = dcnode.get_src().abspath();
-            tgtcp = bldnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
-            if not os.path.exists(os.path.dirname(tgtcp)) :
-                os.makedirs(os.path.dirname(tgtcp))
-            res = shutil.copy(srccp,tgtcp)
-        bld.end_msg( 'ok' )
+            #copying dijit nls as its not working though profile bug #248006
+            bld.start_msg( "Copying dijit nls ")
+            for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
+                dcnode = appBuild_dir.get_src().find_node(dcmpnt)
+                if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
+                srccp = dcnode.get_src().abspath();
+                tgtcp = bldnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
+                if not os.path.exists(os.path.dirname(tgtcp)) :
+                    os.makedirs(os.path.dirname(tgtcp))
+                res = shutil.copy(srccp,tgtcp)
+            bld.end_msg( 'ok' )
 
-        #TODO copy built dijit Theme
+            #TODO copy built dijit Theme
+
         #TODO build and copy dojox mobile themes
  
         
