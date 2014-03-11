@@ -14,7 +14,7 @@ It uses:
 HowTo
 ---
 ./waf configure --download --engine=[dojo] --platform=[android|local|chrome|owa]   
-./waf build --partialBuild   
+./waf build --partial --bT=[debug|release]   
 ./waf dist_[chrome]   
 ./waf distclean
 

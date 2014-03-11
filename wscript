@@ -1,7 +1,7 @@
 # How to use
 # ==========
 #   ./waf configure --download --engine=[dojo] --platform=[android|local|chrome|owa]
-#   ./waf build --partialBuild
+#   ./waf build --partial --bT=[debug|release]
 #   ./waf install
 #   ./waf dist_[chrome]
 
@@ -43,7 +43,7 @@ def options(opt):
     
     opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [True | False (default)')
 
-    opt.add_option('--bT', action='store_true', default='release', help='build type [debug | release (default)]')
+    opt.add_option('--bT', action='store', default='release', help='build type [debug | release (default)]')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -258,6 +258,10 @@ def build(bld):
     #save build directory node for build
     bldnode=bld.path.get_bld()
 
+    #validate option list
+    if bld.options.bT not in BUILDTYPES :
+      bld.fatal("The build type " + bld.options.bT + " is unknown. Please use one of those [" + BUILDTYPES +"]")
+
     #running build in depends
     depends_dir = bld.path.get_src().find_dir('depends')
     if depends_dir is None : bld.fatal("depends/ folder was not found. Cannot continue.")
@@ -384,8 +388,9 @@ def build(bld):
         #copy built file from build dir to wbuild keeping the structure
         for filefolder in ['app', 'dojo']: #NB: might need in the future"dojox/mobile/deviceTheme.js"
             extensions = ['js']
-            if bld.options.bT is 'debug': #on debug mode we also copy map and uncompressed files
+            if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
                 extensions.extend(['js.uncompressed.js', 'js.map'])
+                print extensions
             for extension in extensions:
                 bld.start_msg("Extracting " +  filefolder + "." + extension )
                 _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
@@ -650,7 +655,7 @@ def build(bld):
           tgt = task.outputs[0].abspath()
 
           dgbopt = " --release "
-          if bld.options.bT is 'debug':
+          if bld.options.bT == 'debug':
             dbgopt = " --debug "
           
           #finding relevant build script
