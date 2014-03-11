@@ -345,7 +345,7 @@ def build(bld):
                 bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
 
-        def cpDojo():
+        def cpBuild(task):
             #look for built result
             dojobuildnode = appBuild_dir.find_dir('dojo')
             if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
@@ -356,7 +356,7 @@ def build(bld):
                 if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
                     extensions.extend(['js.uncompressed.js', 'js.map'])
                 for extension in extensions:
-                    bld.start_msg("Extracting " +  filefolder + "." + extension )
+                    print "Extracting " +  filefolder + "." + extension
                     _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
                     if _srcNode is None: bld.fatal("Not found")
                     bldscriptsnode.make_node(filefolder).mkdir()
@@ -365,10 +365,9 @@ def build(bld):
                     if bld.env.PLATFORM == 'android' : #create struct and copy files
                         assetswwwscripts_dir.make_node(filefolder).mkdir()
                         shutil.copy(_srcNode.abspath(), assetswwwscripts_dir.make_node(_srcNode.path_from(appBuild_dir)).abspath())
-                    bld.end_msg( _destNode.relpath() )
 
             #extracting dojo resources
-            bld.start_msg("Extracting Dojo resources" )
+            print "Extracting Dojo resources"
             dojoresnode = dojobuildnode.find_dir("resources")
             if dojoresnode is not None :
                 scriptsresnode = bldscriptsnode.make_node("dojo").make_node("resources")
@@ -378,13 +377,12 @@ def build(bld):
                 shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
                 if bld.env.PLATFORM == 'android' :
                     shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
-            bld.end_msg(scriptsresnode.relpath())
         
             if DIJIT :
                 #extracting localization resources
                 dojonls = dojobuildnode.find_node("nls")
                 if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
-                bld.start_msg( "Extracting Localization resources ")
+                print "Extracting Dojo Localization resources"
                 scriptsdnlsnode = bldscriptsnode.make_node("dojo").make_node("nls")
                 scriptsdnlsnode.mkdir()
                 #copying localization resources from the build ( excluding default copied file by dojo build process )
@@ -393,10 +391,9 @@ def build(bld):
                         shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
                             shutil.copytree(dojonls.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
-                bld.end_msg( scriptsdnlsnode.relpath() )
         
                 #copying dijit nls as its not working though profile bug #248006
-                bld.start_msg( "Copying dijit nls ")
+                print "Copying Dijit nls "
                 for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
                     dcnode = appBuild_dir.get_src().find_node(dcmpnt)
                     if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
@@ -409,7 +406,6 @@ def build(bld):
                         assetswwwscripts_dir.make_node('dijit/nls').mkdir()
                         assetswwwscripts_dir.make_node('dijit/form/nls').mkdir()
                         shutil.copy(srccp, assetswwwscripts_dir.make_node(dcnode.path_from(appBuild_dir)).abspath())
-                bld.end_msg( 'ok' )
 
                 #TODO copy built dijit Theme
 
@@ -439,15 +435,16 @@ def build(bld):
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
             buildApp(profnode)
 
-        cpDojo() #copy dojo
+        #copy dojo task call
+        bld( rule = cpBuild )
         
         #static files
-        statics = ('images/**/*.png images/**/*.gif images/**/*.jpg images/**/*.jpeg'
-                   'fonts/*.otf fonts/*.ttf fonts/*.svg fonts/*.eot fonts/*.txt fonts/.htaccess'
-                   'css/*.css'
-                   'content/*.*'
-                   'audio/**/*.ogg audio/**/*.mp3 audio/**/*.wav'
-                   '*.html *.txt *.php *.md *.php5 *.asp .htaccess')
+        statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 
+                   'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/.htaccess',
+                   'css/*.css',
+                   'content/*.*',
+                   'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav',
+                   '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess']
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
             if static.relpath().find(".*ignore") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore                
                 bld(
