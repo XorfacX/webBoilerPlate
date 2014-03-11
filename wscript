@@ -409,7 +409,9 @@ def build(bld):
 
                 #TODO copy built dijit Theme
 
+            if bld.env.PLATFORM == 'android' :
             #TODO build and copy dojox mobile themes
+                pass
 
 
         #folder def
