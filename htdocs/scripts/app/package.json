@@ -1,34 +1,34 @@
 {
-	"name": "webRoot",
-	"description": "DESC TODO",
-	"version":"1",
-	"keywords": ["JavaScript", "Dojo", "Base", "FairyDwarves"],
-	"maintainers":[ {
-        "name": "XorfacX",
-        "email": "xorfacx@fairydwarves.com"
-    }
+    "name": "webBoilerPlate",
+    "description": "The project aim is to be the root of all web project. It contains the structure and scripts design to start a project with a proper configuration.",
+    "version":"1",
+    "keywords": ["JavaScript", "Dojo", "Base", "FairyDwarves"],
+    "maintainers":[ {
+            "name": "XorfacX",
+            "email": "xorfacx@fairydwarves.com"
+        }
   ],
   "contributors":[ {
-        "name": "XorfacX",
-        "email": "xorfacx@fairydwarves.com"
-    }
+            "name": "XorfacX",
+            "email": "xorfacx@fairydwarves.com"
+        }
   ],
-	"bugs": "http://www.hostedredmine.com/projects/fairydwarves_05/issues",
-	"licenses": [
-		 {
-				 "type": "BSD 3"
-		 }
-	],
-	
-	"repository": {
+    "bugs": "http://www.hostedredmine.com/projects/fairydwarves_05/issues",
+    "licenses": [
+         {
+             "type": "Apache License Version 2.0"
+         }
+    ],
+    
+    "repository": {
     "type":"git",
     "url":"https://github.com/XorfacX/webBoilerPlate.git", 
     "path": "htdocs/app"
-  },	
-	
-	"main": "./main",
-	"dojoBuild": "package.js",	
-  "dependencies": {
-    "dojo": "1.9.3"
-  }
+  },    
+    
+    "main": "./main",
+    "dojoBuild": "package.js",
+    "dependencies": {
+        "dojo": "1.9.3"
+    }
 }
