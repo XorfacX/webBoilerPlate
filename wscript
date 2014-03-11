@@ -385,25 +385,26 @@ def build(bld):
         bld.start_msg("Extracting Dojo resources" )
         dojoresnode = dojobuildnode.find_dir("resources")
         if dojoresnode is not None :
-            scriptsresnode = appBuild_dir.make_node("resources")
+            scriptsresnode = bldscriptsnode.make_node("dojo").make_node("resources")
             if os.path.exists(scriptsresnode.abspath()) :
                 shutil.rmtree(scriptsresnode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
             shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
+            #TODO ANDROID
         bld.end_msg(scriptsresnode.relpath())
-    
+        
         if DIJIT :
             #extracting localization resources
             dojonls = dojobuildnode.find_node("nls")
             if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
             bld.start_msg( "Extracting Localization resources ")
-            scriptsdnlsnode = bldnode.make_node("nls")
+            scriptsdnlsnode = bldscriptsnode.make_node("dojo").make_node("nls")
             scriptsdnlsnode.mkdir()
-
             #copying localization resources from the build ( excluding default copied file by dojo build process )
             for fname in dojonls.ant_glob("dojo_*") :
-                if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 :
+                if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 : ##TODO debug build 
                     shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
+                    #TODO ANDROID
             bld.end_msg( scriptsdnlsnode.relpath() )
         
             #copying dijit nls as its not working though profile bug #248006
@@ -411,11 +412,12 @@ def build(bld):
             for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
                 dcnode = appBuild_dir.get_src().find_node(dcmpnt)
                 if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-                srccp = dcnode.get_src().abspath();
-                tgtcp = bldnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
+                srccp = dcnode.get_src().abspath()
+                tgtcp = bldscriptsnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
                 if not os.path.exists(os.path.dirname(tgtcp)) :
                     os.makedirs(os.path.dirname(tgtcp))
                 res = shutil.copy(srccp,tgtcp)
+                #TODO ANDROID
             bld.end_msg( 'ok' )
 
             #TODO copy built dijit Theme
@@ -520,8 +522,8 @@ def build(bld):
 
         #Compile app src files
         jsFiles = ['*.js']
-        #if DIJIT:
-        #    jsFiles.extend(['nls/**/*.js'])
+        if DIJIT:
+            jsFiles.extend(['nls/**/*.js'])
         for js in scripts_dir.get_src().ant_glob(jsFiles):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
             bld(
