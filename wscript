@@ -314,6 +314,14 @@ def build(bld):
         if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
         assetswwwscripts_dir = assetswww_dir.make_node('scripts')
         assetswwwscripts_dir.mkdir()
+
+        if bld.env.ENGINE == "dojo" :
+            assetswwwscriptsdojo_dir = assetswwwscripts_dir.make_node("dojo")
+            if os.path.exists(assetswwwscriptsdojo_dir.abspath()) :
+                shutil.rmtree(assetswwwscriptsdojo_dir.abspath())
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+            assetswwwscriptsdojo_dir.mkdir()
+    #end PLATFORM android
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
@@ -378,7 +386,7 @@ def build(bld):
                 shutil.copy(_srcNode.abspath(), _destNode.abspath())
                 if bld.env.PLATFORM == 'android' : #create struct and copy files
                     assetswwwscripts_dir.make_node(filefolder).mkdir()
-                    shutil.copy(_srcNode.abspath(), assetswwwscripts_dir.make_node(_srcNode.path_from(appBuild_dir)).abspath())  
+                    shutil.copy(_srcNode.abspath(), assetswwwscripts_dir.make_node(_srcNode.path_from(appBuild_dir)).abspath())
                 bld.end_msg( _destNode.relpath() )
 
         #extracting dojo resources
@@ -390,7 +398,8 @@ def build(bld):
                 shutil.rmtree(scriptsresnode.abspath())
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
             shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
-            #TODO ANDROID
+            if bld.env.PLATFORM == 'android' :
+                shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
         bld.end_msg(scriptsresnode.relpath())
         
         if DIJIT :
@@ -402,9 +411,10 @@ def build(bld):
             scriptsdnlsnode.mkdir()
             #copying localization resources from the build ( excluding default copied file by dojo build process )
             for fname in dojonls.ant_glob("dojo_*") :
-                if fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1 : ##TODO debug build 
+                if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
                     shutil.copy( fname.abspath(), scriptsdnlsnode.abspath())
-                    #TODO ANDROID
+                    if bld.env.PLATFORM == 'android' :
+                        shutil.copytree(dojonls.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
             bld.end_msg( scriptsdnlsnode.relpath() )
         
             #copying dijit nls as its not working though profile bug #248006
@@ -417,7 +427,10 @@ def build(bld):
                 if not os.path.exists(os.path.dirname(tgtcp)) :
                     os.makedirs(os.path.dirname(tgtcp))
                 res = shutil.copy(srccp,tgtcp)
-                #TODO ANDROID
+                if bld.env.PLATFORM == 'android' :
+                    assetswwwscripts_dir.make_node('dijit/nls').mkdir()
+                    assetswwwscripts_dir.make_node('dijit/form/nls').mkdir()
+                    shutil.copy(srccp, assetswwwscripts_dir.make_node(dcnode.path_from(appBuild_dir)).abspath())
             bld.end_msg( 'ok' )
 
             #TODO copy built dijit Theme
