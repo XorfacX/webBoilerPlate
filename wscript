@@ -436,24 +436,6 @@ def build(bld):
             #TODO copy built dijit Theme
 
         #TODO build and copy dojox mobile themes
- 
-        
-        ##copy content
-        #for folder in ['audio','content','css','dojox', 'fonts','images']:
-        #    _srcDir = os.path.join(htdocs_dir.abspath(),folder)
-        #    if os.path.exists(_srcDir): #do nothing when source doesnt exists, this allow a more permissive folder list definition
-        #        _destDir = os.path.join(bldnode.abspath(), folder)
-        #        if os.path.exists(_destDir):
-        #          shutil.rmtree(_destDir)
-        #          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-        #        shutil.copytree(_srcDir, _destDir)
-
-        #        if bld.env.PLATFORM == 'android' :
-        #            _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
-        #            if os.path.exists(_android_destDir) :
-        #              shutil.rmtree(_android_destDir)
-        #              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-        #            shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
         
         #static files
         statics = ('images/**/*.png images/**/*.gif images/**/*.jpg images/**/*.jpeg'
@@ -600,7 +582,7 @@ def build(bld):
         bld(
             rule = androbuild_task,
             source = android_proj_node.make_node("build.xml"),
-            target = android_proj_node.make_node(os.path.join("bin",ANDROID_PROJECT + "-debug.apk" )),
+            target = android_proj_node.make_node(os.path.join("ant-build",ANDROID_PROJECT + "-debug.apk" )), #param to check if build is at the good location
             always = True
         )
 
