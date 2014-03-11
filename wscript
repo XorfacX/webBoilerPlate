@@ -259,6 +259,8 @@ def build(bld):
 
     #save build directory node for build
     bldnode=bld.path.get_bld()
+    bldscriptsnode = bldnode.make_node('scripts')
+    bldscriptsnode.mkdir()
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
@@ -310,6 +312,8 @@ def build(bld):
         #find assets/www dir
         assetswww_dir = pubandroid_dir.find_dir('assets').find_dir('www')
         if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
+        assetswwwscripts_dir = assetswww_dir.make_node('scripts')
+        assetswwwscripts_dir.mkdir()
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
@@ -333,15 +337,13 @@ def build(bld):
                 bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
 
-        #find htdocs dir
+        #folder def
         htdocs_dir = bld.path.get_src().find_dir('htdocs')
         if htdocs_dir is None : bld.fatal("htdocs/ subfolder was not found. Cannot continue.")
-        #find scripts dir
         scripts_dir = htdocs_dir.find_dir('scripts')
         if scripts_dir is None : bld.fatal("htdocs/scripts subfolder was not found. Cannot continue.")
-        #find app dir
         app_dir = scripts_dir.find_dir('app')
-        if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
+        if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")        
 
         #building app but remove already built first
         profnode = depends_dir.find_node(bld.env.BUILD_PROFILE)
@@ -358,10 +360,9 @@ def build(bld):
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
             buildApp(profnode)
 
-        #finding dojo mandatory layer and copying only what we need
+        #look for built result
         dojobuildnode = appBuild_dir.find_dir('dojo')
         if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
-        
 
         #copy built file from build dir to wbuild keeping the structure
         for filefolder in ['app', 'dojo']: #NB: might need in the future"dojox/mobile/deviceTheme.js"
@@ -372,12 +373,12 @@ def build(bld):
                 bld.start_msg("Extracting " +  filefolder + "." + extension )
                 _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
                 if _srcNode is None: bld.fatal("Not found")
-                bldnode.make_node('scripts').make_node(filefolder).mkdir()
+                bldscriptsnode.make_node(filefolder).mkdir()
                 _destNode = bldnode.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir))
                 shutil.copy(_srcNode.abspath(), _destNode.abspath())
                 if bld.env.PLATFORM == 'android' : #create struct and copy files
-                    assetswww_dir.make_node('scripts').make_node(filefolder).mkdir()
-                    shutil.copy(_srcNode.abspath(), assetswww_dir.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir)).abspath())  
+                    assetswwwscripts_dir.make_node(filefolder).mkdir()
+                    shutil.copy(_srcNode.abspath(), assetswwwscripts_dir.make_node(_srcNode.path_from(appBuild_dir)).abspath())  
                 bld.end_msg( _destNode.relpath() )
 
         #extracting dojo resources
@@ -518,10 +519,10 @@ def build(bld):
         #  )
 
         #Compile app src files
-        jsFiles = ['scripts/*.js']
+        jsFiles = ['*.js']
         #if DIJIT:
         #    jsFiles.extend(['nls/**/*.js'])
-        for js in htdocs_dir.get_src().ant_glob(jsFiles):
+        for js in scripts_dir.get_src().ant_glob(jsFiles):
           bld(
             rule = cbuild_task,
             source = js.get_src(),
@@ -530,8 +531,8 @@ def build(bld):
           if bld.env.PLATFORM == 'android' :
               bld(
                 rule = cbuild_task,
-                source = bldnode.make_node(js.path_from(htdocs_dir)),
-                target = assetswww_dir.make_node(js.path_from(htdocs_dir))
+                source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
+                target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir))
               )
           
     else : bld.fatal("ENGINE has to be dojo. Please run \'./waf configure [ --engine= [ dojo ] ]\'")
