@@ -139,7 +139,7 @@ def configure(conf):
             dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
             if os.path.exists(htdocsDojoxNode.abspath()) : #remove existing dojox dir
                 shutil.rmtree(htdocsDojoxNode.abspath(), 1)
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
             dmbltnode.mkdir()
             for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
                 thdir = dmblthemes_build.find_dir(ftname)
@@ -523,17 +523,18 @@ def build(bld):
         #if DIJIT:
         #    jsFiles.extend(['nls/**/*.js'])
         for js in scripts_dir.get_src().ant_glob(jsFiles):
-          bld(
-            rule = cbuild_task,
-            source = js.get_src(),
-            target = bldnode.make_node(js.path_from(htdocs_dir))
-          )
-          if bld.env.PLATFORM == 'android' :
-              bld(
+            #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
+            bld(
                 rule = cbuild_task,
-                source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
-                target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir))
-              )
+                source = js.get_src(),
+                target = bldscriptsnode.make_node(js.path_from(scripts_dir))
+            )
+            if bld.env.PLATFORM == 'android' :
+                bld(
+                    rule = cbuild_task,
+                    source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
+                    target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir))
+                )
           
     else : bld.fatal("ENGINE has to be dojo. Please run \'./waf configure [ --engine= [ dojo ] ]\'")
   
