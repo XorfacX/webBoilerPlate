@@ -379,6 +379,10 @@ def build(bld):
                     shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
         
             if DIJIT :
+                #handling Dijit is really there
+                dijitbuildnode = appBuild_dir.find_dir('dijit')
+                if dijitbuildnode is None : bld.fatal("Built Dijit folder was not found. Cannot continue.")
+
                 #extracting localization resources
                 dojonls = dojobuildnode.find_node("nls")
                 if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
@@ -393,7 +397,7 @@ def build(bld):
                             shutil.copytree(dojonls.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
         
                 #copying dijit nls as its not working though profile bug #248006
-                print "Copying Dijit nls "
+                print "Extracting Dijit Localization resources"
                 for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
                     dcnode = appBuild_dir.get_src().find_node(dcmpnt)
                     if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
@@ -407,10 +411,26 @@ def build(bld):
                         assetswwwscripts_dir.make_node('dijit/form/nls').mkdir()
                         shutil.copy(srccp, assetswwwscripts_dir.make_node(dcnode.path_from(appBuild_dir)).abspath())
 
-                #TODO copy built dijit Theme
+                #copy built dijit Theme into css
+                dijitbuildthemes = dijitbuildnode.find_node("themes")
+                if dijitbuildthemes is None : bld.fatal("Dijit themes directory was not found in build directory. Cannot continue.")
+                print "Extracting Dijit Themes"
+                cssNode = bldnode.make_node("css")
+                #copying dijit themes (not built)
+                for tname in DIJIT_THEMES :
+                    thdir = dijitbuildthemes.find_dir(tname)
+                    #print thdir.abspath()
+                    if thdir is not None :
+                        cssThDir = cssNode.make_node(tname)
+                        #print cssThDir.abspath()
+                        if os.path.exists(cssThDir.abspath()) :
+                            shutil.rmtree(cssThDir.abspath())
+                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                        shutil.copytree (thdir.abspath(), cssThDir.abspath() )
+                        #TODO android
 
             if bld.env.PLATFORM == 'android' :
-            #TODO build and copy dojox mobile themes
+                #TODO build and copy dojox mobile themes
                 pass
 
 
@@ -420,7 +440,7 @@ def build(bld):
         scripts_dir = htdocs_dir.find_dir('scripts')
         if scripts_dir is None : bld.fatal("htdocs/scripts subfolder was not found. Cannot continue.")
         app_dir = scripts_dir.find_dir('app')
-        if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")        
+        if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
 
         #building app but remove already built first
         profnode = depends_dir.find_node(bld.env.BUILD_PROFILE)
@@ -503,11 +523,11 @@ def build(bld):
           buildandroid_node = None
           if os.name == 'posix' and platform.system() == 'Linux':
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build")
-              if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
+              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
               os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
           elif os.name == 'nt' and platform.system() == 'Windows' :
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build.bat")
-              if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
+              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
             
           androbuild_proc = subprocess.Popen(
             buildandroid_node.relpath() + dbgopt ,
@@ -643,11 +663,11 @@ def run(ctx): # this is a buildcontext
         
     if os.name == 'posix' and platform.system() == 'Linux':
         runandroid_node=android_proj_node.find_node("cordova").find_node("run")
-        if runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
+        if runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
         os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
     elif os.name == 'nt' and platform.system() == 'Windows' :
         runandroid_node=android_proj_node.find_node("cordova").find_node("run.bat")
-        if  runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
+        if  runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
             
     androrun_proc = subprocess.Popen(
       runandroid_node.relpath(),
