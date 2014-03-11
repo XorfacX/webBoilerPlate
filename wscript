@@ -333,30 +333,6 @@ def build(bld):
                 bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
 
-
-        #define how to copy dojo components. source and target needs to be in the dojolayer. everything else is relative to it
-        def cp_dojo_task(task):
-            srcnode = task.inputs[0].parent # get used dojo components from src
-            tgnode = task.outputs[0].parent # prepare to copy them to tg
-            
-            #copy required resources
-            for dcmpnt in ['dojo.js','../app/nls', 'resources','css','dijit'] : #build : copying the result of config into build folder
-                dcnode = srcnode.get_src().find_node(dcmpnt)
-                if dcnode is None : bld.fatal(os.path.join(srcnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-                if os.path.isdir(dcnode.abspath()) :
-                    bld_dcnode = tgnode.make_node(dcnode.path_from(srcnode))
-                    if os.path.exists(bld_dcnode.abspath()) :
-                        shutil.rmtree(bld_dcnode.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                    res = shutil.copytree(dcnode.get_src().abspath(),bld_dcnode.abspath())
-                else :
-                    srccp = dcnode.get_src().abspath();
-                    tgtcp = tgnode.make_node(dcnode.path_from(srcnode)).abspath();
-                    if not os.path.exists(os.path.dirname(tgtcp)) :
-                        os.makedirs(os.path.dirname(tgtcp))
-                    res = shutil.copy(srccp,tgtcp)
-            return res
-
         #find htdocs dir
         htdocs_dir = bld.path.get_src().find_dir('htdocs')
         if htdocs_dir is None : bld.fatal("htdocs/ subfolder was not found. Cannot continue.")
@@ -502,6 +478,30 @@ def build(bld):
 #          )
         #dojo + ressources   ##NB: we should build ressources using dojo !!
 
+
+        ##define how to copy dojo components. source and target needs to be in the dojolayer. everything else is relative to it
+        #def cp_dojo_task(task):
+        #    srcnode = task.inputs[0].parent # get used dojo components from src
+        #    tgnode = task.outputs[0].parent # prepare to copy them to tg
+            
+        #    #copy required resources
+        #    for dcmpnt in ['dojo.js','../app/nls', 'resources','css','dijit'] : #build : copying the result of config into build folder
+        #        dcnode = srcnode.get_src().find_node(dcmpnt)
+        #        if dcnode is None : bld.fatal(os.path.join(srcnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
+        #        if os.path.isdir(dcnode.abspath()) :
+        #            bld_dcnode = tgnode.make_node(dcnode.path_from(srcnode))
+        #            if os.path.exists(bld_dcnode.abspath()) :
+        #                shutil.rmtree(bld_dcnode.abspath())
+        #                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+        #            res = shutil.copytree(dcnode.get_src().abspath(),bld_dcnode.abspath())
+        #        else :
+        #            srccp = dcnode.get_src().abspath();
+        #            tgtcp = tgnode.make_node(dcnode.path_from(srcnode)).abspath();
+        #            if not os.path.exists(os.path.dirname(tgtcp)) :
+        #                os.makedirs(os.path.dirname(tgtcp))
+        #            res = shutil.copy(srccp,tgtcp)
+        #    return res
+
         #dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')    # build dojo layer
         #if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),'dojo/dojo.js') + " not found")
         #bld(
@@ -517,28 +517,11 @@ def build(bld):
         #              target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
         #  )
 
-
-        ##TODO compile everything inside script folder
-        ##markdown.js
-        #markdown = scripts_dir.get_src().find_node('Markdown.Converter.js')
-        #bld(
-        #    rule = cbuild_task,
-        #    source = markdown.get_src(),
-        #    target = bldnode.make_node(markdown.path_from(htdocs_dir))
-        #)
-        ##cbuild_task(markdown.get_src().abspath(), bldnode.make_node(markdown.path_from(htdocs_dir)).abspath(), False)
-        #if bld.env.PLATFORM == 'android' :
-        #    bld(
-        #        rule = cbuild_task,
-        #        source = bldnode.make_node(markdown.path_from(htdocs_dir)),
-        #        target = assetswww_dir.make_node(markdown.path_from(htdocs_dir))
-        #    )
-                    
         #Compile app src files
-        jsFiles = ['*.js']
-        if DIJIT:
-            jsFiles.extend(['nls/**/*.js'])
-        for js in app_dir.get_src().ant_glob(jsFiles):
+        jsFiles = ['scripts/*.js']
+        #if DIJIT:
+        #    jsFiles.extend(['nls/**/*.js'])
+        for js in htdocs_dir.get_src().ant_glob(jsFiles):
           bld(
             rule = cbuild_task,
             source = js.get_src(),
@@ -603,7 +586,6 @@ def build(bld):
             target = android_proj_node.make_node(os.path.join("bin",ANDROID_PROJECT + "-debug.apk" )),
             always = True
         )
-        #androbuild_task(android_proj_node, debug = True)
 
     elif bld.env.PLATFORM == 'chrome' :
         ###Creating manifest needed for chrome
