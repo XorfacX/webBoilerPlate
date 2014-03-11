@@ -12,7 +12,6 @@ import shlex,subprocess;
 import platform;
 
 ENGINES = 'dojo'
-BUILDTYPE = 'debug release'
 PLATFORMS = 'android local chrome owa' #list of supported platforms
 MARKDOWN = 0 #enable or disable markdown parser dependency
 LZSTRING = 0 #enable or disable lz-string dependency
@@ -295,5 +294,8 @@ def configure(conf):
     #end of conf.env.ENGINE
 
 def build(bld):
+    #send back needed vars
     bld.env.DOJO_UNZIP = DOJO_UNZIP
     bld.env.BUILD_PROFILE = BUILD_PROFILE
+    bld.env.MARKDOWN = MARKDOWN
+    bld.env.LZSTRING = LZSTRING

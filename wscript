@@ -41,7 +41,7 @@ def options(opt):
     opt.recurse('depends')
     opt.recurse('tools')
     
-    opt.add_option('--buildPartial', action='store_true', default=False, help='do not rebuild the app if build folder is present [default: \'True\']')
+    opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [default: \'True\']')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -358,19 +358,13 @@ def build(bld):
         #find app dir
         app_dir = scripts_dir.find_dir('app')
         if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
-        #find dojo directory
-        dojonode = scripts_dir.ant_glob('dojo',src=False, dir=True)[0]
-        if dojonode is None: bld.fatal("Dojo toolkit was not found. Please run waf configure.")
-        #else: print "dojo path " + dojonode.abspath()
-        #find build profile file
-        profnode = depends_dir.find_node(bld.env.BUILD_PROFILE)
-        if profnode is None: bld.fatal("App build profile was not found. Please run waf configure.")
-        #else: print "profile path " + profnode.abspath()
 
         #building app but remove already built first
+        profnode = depends_dir.find_node(bld.env.BUILD_PROFILE)
+        if profnode is None: bld.fatal("App build profile was not found. Please run waf configure.")
         appBuild_dir = scripts_dir.find_dir(jsOut)
         appIsBuilt = appBuild_dir is not None
-        if bld.options.buildPartial:
+        if bld.options.partial:
             if not appIsBuilt:
                 buildApp(profnode)
         else:
@@ -383,38 +377,27 @@ def build(bld):
         #finding dojo mandatory layer and copying only what we need
         dojobuildnode = appBuild_dir.find_dir('dojo')
         if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
-        dojobaselayer = dojobuildnode.find_node("dojo.js")
-        if dojobaselayer is None : bld.fatal("dojo.js mandatory base layer was not found in build directory. Cannot continue. TIP: look if java is installed and in the path.")
-        dojobaselayer_uc = dojobuildnode.find_node("dojo.js.uncompressed.js")
-        if dojobaselayer_uc is None : bld.fatal("dojo.js.uncompressed.js base layer was not found in build directory. Cannot continue.")
-#        dojoxmobilethemechooser = dojobuildnode.find_node("dojox/mobile/deviceTheme.js")
-#        if dojoxmobilethemechooser is None : bld.fatal("dojox/mobile/deviceTheme.js mandatory base layer was not found in build directory. Cannot continue.")
+        
 
-        #create dirs 
-        for folder in ['scripts/app', 'scripts/dojo']:
-          foldernode = bldnode.make_node(folder)
-          foldernode.mkdir()
-          if bld.env.PLATFORM == 'android' :
-            androidfoldernode = assetswww_dir.make_node(folder)
-            androidfoldernode.mkdir()
-                
-        #copying mandatory dojo layer
-        bld.start_msg("Extracting Dojo built layer" )
-        # creating dojo folder
-        scriptdojonode = scriptsnode.make_node(os.path.dirname(dojobaselayer.path_from(dojobuildnode)))
-        if not os.path.exists(scriptdojonode.abspath()) :
-          scriptdojonode.mkdir()
-        shutil.copy(dojobaselayer.abspath(),scriptsnode.make_node(dojobaselayer.path_from(dojobuildnode)).abspath())
-        bld.end_msg( scriptsnode.find_node(dojobaselayer.path_from(dojobuildnode)).relpath())
-        bld.start_msg("Extracting Dojo built layer - uncompressed" )
-        shutil.copy(dojobaselayer_uc.abspath(),scriptsnode.make_node(dojobaselayer_uc.path_from(dojobuildnode)).abspath())
-        bld.end_msg( scriptsnode.find_node(dojobaselayer_uc.path_from(dojobuildnode)).relpath())
+        #copy built file from build dir to wbuild keeping the structure
+        for filefolder in ['app', 'dojo']: #NB: might need in the future"dojox/mobile/deviceTheme.js"
+            for extension in ['js', 'js.uncompressed.js', 'js.map']:
+                bld.start_msg("Extracting " +  filefolder + "." + extension )
+                _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
+                if _srcNode is None: bld.fatal("Not found")
+                bldnode.make_node('scripts').make_node(filefolder).mkdir()
+                _destNode = bldnode.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir))
+                shutil.copy(_srcNode.abspath(), _destNode.abspath())
+                if bld.env.PLATFORM == 'android' : #create struct and copy files
+                    assetswww_dir.make_node('scripts').make_node(filefolder).mkdir()
+                    #shutil.copy(_srcNode.abspath(), assetswww_dir.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir)).abspath())  
+                bld.end_msg( _destNode.relpath() )
 
         #extracting dojo resources
         bld.start_msg("Extracting Dojo resources" )
-        dojoresnode = dojonode.find_dir("resources")
+        dojoresnode = dojobuildnode.find_dir("resources")
         if dojoresnode is not None :
-            scriptsresnode = scriptsnode.make_node("resources")
+            scriptsresnode = appBuild_dir.make_node("resources")
             if os.path.exists(scriptsresnode.abspath()) :
                 shutil.rmtree(scriptsresnode.abspath())
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
@@ -425,7 +408,7 @@ def build(bld):
         dojonls = dojobuildnode.find_node("nls")
         if dojonls is None : bld.fatal("nls for mandatory base layer was not found in build directory. Cannot continue.")
         bld.start_msg( "Extracting Localization resources ")
-        scriptsdnlsnode = scriptsnode.make_node("nls")
+        scriptsdnlsnode = bldnode.make_node("nls")
         scriptsdnlsnode.mkdir()
 
         #copying localization resources from the build ( excluding default copied file by dojo build process )
@@ -440,7 +423,7 @@ def build(bld):
             dcnode = appBuild_dir.get_src().find_node(dcmpnt)
             if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
             srccp = dcnode.get_src().abspath();
-            tgtcp = scriptsnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
+            tgtcp = bldnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
             if not os.path.exists(os.path.dirname(tgtcp)) :
                 os.makedirs(os.path.dirname(tgtcp))
             res = shutil.copy(srccp,tgtcp)
@@ -450,22 +433,22 @@ def build(bld):
         #TODO build and copy dojox mobile themes
  
         
-        #copy content
-        for folder in ['audio','content','css','dojox', 'fonts','images']:
-            _srcDir = os.path.join(htdocs_dir.abspath(),folder)
-            if os.path.exists(_srcDir): #do nothing when source doesnt exists, this allow a more permissive folder list definition
-                _destDir = os.path.join(bldnode.abspath(), folder)
-                if os.path.exists(_destDir):
-                  shutil.rmtree(_destDir) #remove existing dir 
-                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                shutil.copytree(_srcDir, _destDir)
+        ##copy content
+        #for folder in ['audio','content','css','dojox', 'fonts','images']:
+        #    _srcDir = os.path.join(htdocs_dir.abspath(),folder)
+        #    if os.path.exists(_srcDir): #do nothing when source doesnt exists, this allow a more permissive folder list definition
+        #        _destDir = os.path.join(bldnode.abspath(), folder)
+        #        if os.path.exists(_destDir):
+        #          shutil.rmtree(_destDir)
+        #          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+        #        shutil.copytree(_srcDir, _destDir)
 
-                if bld.env.PLATFORM == 'android' :
-                    _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
-                    if os.path.exists(_android_destDir) :
-                      shutil.rmtree(_android_destDir) #remove existing dir 
-                      if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                    shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
+        #        if bld.env.PLATFORM == 'android' :
+        #            _android_destDir = os.path.join(assetswww_dir.abspath(), folder)
+        #            if os.path.exists(_android_destDir) :
+        #              shutil.rmtree(_android_destDir)
+        #              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+        #            shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
         
 #        # handle images/
 #        for img in htdocs_dir.get_src().ant_glob('images/**/*.png images/**/*.gif images/**/*.jpg'): # find images files
@@ -616,21 +599,21 @@ def build(bld):
           )
 
 
-        #TODO compile everything inside script folder
-        #markdown.js
-        markdown = scripts_dir.get_src().find_node('Markdown.Converter.js')
-        bld(
-            rule = cbuild_task,
-            source = markdown.get_src(),
-            target = bldnode.make_node(markdown.path_from(htdocs_dir))
-        )
-        #cbuild_task(markdown.get_src().abspath(), bldnode.make_node(markdown.path_from(htdocs_dir)).abspath(), False)
-        if bld.env.PLATFORM == 'android' :
-            bld(
-                rule = cbuild_task,
-                source = bldnode.make_node(markdown.path_from(htdocs_dir)),
-                target = assetswww_dir.make_node(markdown.path_from(htdocs_dir))
-            )
+        ##TODO compile everything inside script folder
+        ##markdown.js
+        #markdown = scripts_dir.get_src().find_node('Markdown.Converter.js')
+        #bld(
+        #    rule = cbuild_task,
+        #    source = markdown.get_src(),
+        #    target = bldnode.make_node(markdown.path_from(htdocs_dir))
+        #)
+        ##cbuild_task(markdown.get_src().abspath(), bldnode.make_node(markdown.path_from(htdocs_dir)).abspath(), False)
+        #if bld.env.PLATFORM == 'android' :
+        #    bld(
+        #        rule = cbuild_task,
+        #        source = bldnode.make_node(markdown.path_from(htdocs_dir)),
+        #        target = assetswww_dir.make_node(markdown.path_from(htdocs_dir))
+        #    )
                     
         #Compile app src files
         for js in app_dir.get_src().ant_glob('*.js'):
@@ -671,7 +654,7 @@ def build(bld):
           if os.name == 'posix' and platform.system() == 'Linux':
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build")
               if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
-              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)    
+              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
           elif os.name == 'nt' and platform.system() == 'Windows' :
               buildandroid_node=android_proj_node.find_node("cordova").find_node("build.bat")
               if  buildandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
@@ -783,7 +766,7 @@ def run(ctx): # this is a buildcontext
     if os.name == 'posix' and platform.system() == 'Linux':
         runandroid_node=android_proj_node.find_node("cordova").find_node("run")
         if runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
-        os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)    
+        os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
     elif os.name == 'nt' and platform.system() == 'Windows' :
         runandroid_node=android_proj_node.find_node("cordova").find_node("run.bat")
         if  runandroid_node is None : conf.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
