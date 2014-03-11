@@ -392,7 +392,6 @@ def build(bld):
             extensions = ['js']
             if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
                 extensions.extend(['js.uncompressed.js', 'js.map'])
-                print extensions
             for extension in extensions:
                 bld.start_msg("Extracting " +  filefolder + "." + extension )
                 _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
@@ -464,122 +463,27 @@ def build(bld):
         #              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
         #            shutil.copytree(_destDir, _android_destDir) #we copy from wbuild
         
-#        # handle images/
-#        for img in htdocs_dir.get_src().ant_glob('images/**/*.png images/**/*.gif images/**/*.jpg'): # find images files
-#          bld(
-#            rule=cp_task,
-#            source=img.get_src(),
-#            target=bldnode.make_node(img.path_from(htdocs_dir))
-#          )# copy them to the build directory
-#          if bld.env.PLATFORM == 'android' :
-#              #copying
-#              bld(
-#                rule=cp_task,
-#                source=bldnode.make_node(img.path_from(htdocs_dir)), # task implicit dependency
-#                target=assetswww_dir.make_node(img.path_from(htdocs_dir))
-#              )
-#        
-#        
-#        # handle fonts/
-#        for fnt in htdocs_dir.get_src().ant_glob('fonts/*.otf fonts/*.ttf fonts/*.svg fonts/*.eot fonts/*.txt fonts/.htaccess'):      # find font files          
-#          bld(
-#            rule=cp_task,
-#            source=fnt.get_src(),
-#            target=bldnode.make_node(fnt.path_from(htdocs_dir))
-#          )# copy them to the build directory
-#          if bld.env.PLATFORM == 'android' :
-#              #copying
-#              bld(
-#                rule=cp_task,
-#                source=bldnode.make_node(fnt.path_from(htdocs_dir)),
-#                target=assetswww_dir.make_node(fnt.path_from(htdocs_dir)),
-#              )
-#        
-#        # handle css/ 
-#        for css in htdocs_dir.get_src().ant_glob('css/*.css'):      # find css files
-#          bld(
-#            rule=cp_task,
-#            source=css.get_src(),
-#            target=bldnode.make_node(css.path_from(htdocs_dir))
-#          )# copy them to the build directory
-#          if bld.env.PLATFORM == 'android' :
-#              #copying
-#              bld(
-#                rule=cp_task,
-#                source=bldnode.make_node(css.path_from(htdocs_dir)),
-#                target=assetswww_dir.make_node(css.path_from(htdocs_dir)),
-#                always=True
-#              )
-#        
-#        # handle content/ 
-#        for graphmls in htdocs_dir.get_src().ant_glob('content/*.graphml'): ### content/.htaccess'):      # find graphml files
-#          bld(
-#            rule=cp_task,
-#            source=graphmls.get_src(),
-#            target=bldnode.make_node(graphmls.path_from(htdocs_dir))
-#          )# copy them to the build directory
-#          #_nc_dir = graphmls.get_src().abspath() # + os.path.splitext(graphmls.get_src())[0]
-#          #print _nc_dir
-#          head, tail = os.path.split(graphmls.get_src().abspath())
-#          _nc_dir = os.path.join(head, os.path.splitext(tail)[0])
-#          print _nc_dir
-#          bld(
-#            rule=cp_task,
-#            source=_nc_dir,
-#            target=bldnode.make_node(graphmls.path_from(htdocs_dir))
-#          )
-#          if bld.env.PLATFORM == 'android' :
-#              #copying
-#              bld(
-#                rule=cp_task,
-#                source=bldnode.make_node(graphmls.path_from(htdocs_dir)),
-#                target=assetswww_dir.make_node(graphmls.path_from(htdocs_dir))
-#              )
-#        
-#        # handle audio/
-#        for audio in htdocs_dir.get_src().ant_glob('audio/**/*.ogg audio/**/*.mp3 audio/**/*.wav'): # find audio files
-#          bld(
-#            rule=cp_task,
-#            source=audio.get_src(),
-#            target=bldnode.make_node(audio.path_from(htdocs_dir))
-#          )# copy them to the build directory
-#          if bld.env.PLATFORM == 'android' :
-#              #copying
-#              bld(
-#                rule=cp_task,
-#                source=bldnode.make_node(audio.path_from(htdocs_dir)),
-#                target=assetswww_dir.make_node(audio.path_from(htdocs_dir))
-#              )
-#          
-#        # copy htdocs/../dojox/mobile/themes/
-#        dojox_destDir = os.path.join(bldnode.abspath(), "dojox")
-#        if os.path.exists(dojox_destDir) :
-#          shutil.rmtree(dojox_destDir) #remove existing dir
-#          if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-#        shutil.copytree(os.path.join(htdocs_dir.abspath(),'dojox'), dojox_destDir)
-#        #BUG HERE if the dir is present, the removal is not fast enough at least on windows and the waf build command must be run another time ...
-#        if bld.env.PLATFORM == 'android' :
-#            dojox_android_destDir = os.path.join(assetswww_dir.abspath(), "dojox")
-#            if os.path.exists(dojox_android_destDir) :
-#              shutil.rmtree(dojox_android_destDir) #remove existing dir
-#              if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-#            shutil.copytree(dojox_destDir, dojox_android_destDir)
-#        
-        
         #static files
-        for static in htdocs_dir.get_src().ant_glob('*.static *.txt *.php'):      # find static files
-          bld(
-            rule=cp_task,
-            source=static.get_src(),
-            target=bldnode.make_node(static.path_from(htdocs_dir))
-          )# copy them to the build directory
-          if bld.env.PLATFORM == 'android' :
-              #copying
-              bld(
-                rule=cp_task,
-                source=bldnode.make_node(static.path_from(htdocs_dir)),
-                target=assetswww_dir.make_node(static.path_from(htdocs_dir))
-              )
+        statics = ('images/**/*.png images/**/*.gif images/**/*.jpg images/**/*.jpeg'
+                   'fonts/*.otf fonts/*.ttf fonts/*.svg fonts/*.eot fonts/*.txt fonts/.htaccess'
+                   'css/*.css'
+                   'content/*.*'
+                   'audio/**/*.ogg audio/**/*.mp3 audio/**/*.wav'
+                   '*.html *.txt *.php *.md *.php5 *.asp .htaccess')
+        for static in htdocs_dir.get_src().ant_glob(statics): # find them
+            if static.relpath().find(".*ignore") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore
+                bld(
+                    rule=cp_task,
+                    source=static.get_src(),
+                    target=bldnode.make_node(static.path_from(htdocs_dir))
+                )# copy them to the build directory
+                if bld.env.PLATFORM == 'android' :
+                    #copying
+                    bld(
+                        rule=cp_task,
+                        source=bldnode.make_node(static.path_from(htdocs_dir)),
+                        target=assetswww_dir.make_node(static.path_from(htdocs_dir))
+                    )
         
         #dojo        
 #        dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js') # build dojo layer
@@ -597,20 +501,21 @@ def build(bld):
 #            target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
 #          )
         #dojo + ressources   ##NB: we should build ressources using dojo !!
-        dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')    # build dojo layer
-        if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),'dojo/dojo.js') + " not found")
-        bld(
-                    rule=cp_dojo_task,
-                    source=dojo_layer.get_src(),
-                    target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
-        )# copy dojo to the platform build directory
-        if bld.env.PLATFORM == 'android' :
-          #copying
-          bld(
-            rule=cp_dojo_task,
-                      source=dojo_layer.get_src(),
-                      target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
-          )
+
+        #dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')    # build dojo layer
+        #if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),'dojo/dojo.js') + " not found")
+        #bld(
+        #            rule=cp_dojo_task,
+        #            source=dojo_layer.get_src(),
+        #            target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
+        #)# copy dojo to the platform build directory
+        #if bld.env.PLATFORM == 'android' :
+        #  #copying
+        #  bld(
+        #    rule=cp_dojo_task,
+        #              source=dojo_layer.get_src(),
+        #              target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
+        #  )
 
 
         ##TODO compile everything inside script folder
@@ -630,7 +535,10 @@ def build(bld):
         #    )
                     
         #Compile app src files
-        for js in app_dir.get_src().ant_glob('*.js'):
+        jsFiles = ['*.js']
+        if DIJIT:
+            jsFiles.extend(['nls/**/*.js'])
+        for js in app_dir.get_src().ant_glob(jsFiles):
           bld(
             rule = cbuild_task,
             source = js.get_src(),
