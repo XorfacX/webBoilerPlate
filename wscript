@@ -459,62 +459,6 @@ def build(bld):
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
                         target=assetswww_dir.make_node(static.path_from(htdocs_dir))
                     )
-        
-        #dojo        
-#        dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js') # build dojo layer
-#        if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),"dojo/dojo.js") + " not found")        
-#        bld(
-#            rule=cp_task,
-#            source=dojo_layer.get_src(),
-#            target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
-#        )# copy dojo to the build directory
-#        if bld.env.PLATFORM == 'android' :
-#          #copying
-#          bld(
-#            rule=cp_task,
-#            source=bldnode.make_node(dojo_layer.path_from(htdocs_dir)),
-#            target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
-#          )
-        #dojo + ressources   ##NB: we should build ressources using dojo !!
-
-
-        ##define how to copy dojo components. source and target needs to be in the dojolayer. everything else is relative to it
-        #def cp_dojo_task(task):
-        #    srcnode = task.inputs[0].parent # get used dojo components from src
-        #    tgnode = task.outputs[0].parent # prepare to copy them to tg
-            
-        #    #copy required resources
-        #    for dcmpnt in ['dojo.js','../app/nls', 'resources','css','dijit'] : #build : copying the result of config into build folder
-        #        dcnode = srcnode.get_src().find_node(dcmpnt)
-        #        if dcnode is None : bld.fatal(os.path.join(srcnode.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-        #        if os.path.isdir(dcnode.abspath()) :
-        #            bld_dcnode = tgnode.make_node(dcnode.path_from(srcnode))
-        #            if os.path.exists(bld_dcnode.abspath()) :
-        #                shutil.rmtree(bld_dcnode.abspath())
-        #                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-        #            res = shutil.copytree(dcnode.get_src().abspath(),bld_dcnode.abspath())
-        #        else :
-        #            srccp = dcnode.get_src().abspath();
-        #            tgtcp = tgnode.make_node(dcnode.path_from(srcnode)).abspath();
-        #            if not os.path.exists(os.path.dirname(tgtcp)) :
-        #                os.makedirs(os.path.dirname(tgtcp))
-        #            res = shutil.copy(srccp,tgtcp)
-        #    return res
-
-        #dojo_layer = scripts_dir.get_src().find_node('dojo/dojo.js')    # build dojo layer
-        #if dojo_layer is None : bld.fatal(os.path.join(scripts_dir.relpath(),'dojo/dojo.js') + " not found")
-        #bld(
-        #            rule=cp_dojo_task,
-        #            source=dojo_layer.get_src(),
-        #            target=bldnode.make_node(dojo_layer.path_from(htdocs_dir))
-        #)# copy dojo to the platform build directory
-        #if bld.env.PLATFORM == 'android' :
-        #  #copying
-        #  bld(
-        #    rule=cp_dojo_task,
-        #              source=dojo_layer.get_src(),
-        #              target=assetswww_dir.make_node(dojo_layer.path_from(htdocs_dir))
-        #  )
 
         #Compile app src files
         jsFiles = ['*.js']
