@@ -28,7 +28,7 @@ ANDROID_PROJECT = "webBoilerPlate" #set your android app name when applicable
 
 DIJIT_THEMES = ['nihilo'] #set the list of dojo themes we want to build
 
-
+BUILDTYPES = 'debug release'
 WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder deletion to occur
 
 top = '.'
@@ -41,7 +41,9 @@ def options(opt):
     opt.recurse('depends')
     opt.recurse('tools')
     
-    opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [default: \'True\']')
+    opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [True | False (default)')
+
+    opt.add_option('--bT', action='store_true', default='release', help='build type [debug | release (default)]')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -381,7 +383,10 @@ def build(bld):
 
         #copy built file from build dir to wbuild keeping the structure
         for filefolder in ['app', 'dojo']: #NB: might need in the future"dojox/mobile/deviceTheme.js"
-            for extension in ['js', 'js.uncompressed.js', 'js.map']:
+            extensions = ['js']
+            if bld.options.bT is 'debug': #on debug mode we also copy map and uncompressed files
+                extensions.extend(['js.uncompressed.js', 'js.map'])
+            for extension in extensions:
                 bld.start_msg("Extracting " +  filefolder + "." + extension )
                 _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
                 if _srcNode is None: bld.fatal("Not found")
@@ -390,7 +395,7 @@ def build(bld):
                 shutil.copy(_srcNode.abspath(), _destNode.abspath())
                 if bld.env.PLATFORM == 'android' : #create struct and copy files
                     assetswww_dir.make_node('scripts').make_node(filefolder).mkdir()
-                    #shutil.copy(_srcNode.abspath(), assetswww_dir.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir)).abspath())  
+                    shutil.copy(_srcNode.abspath(), assetswww_dir.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir)).abspath())  
                 bld.end_msg( _destNode.relpath() )
 
         #extracting dojo resources
@@ -643,10 +648,9 @@ def build(bld):
         def androbuild_task(task):
           src = task.inputs[0].abspath()
           tgt = task.outputs[0].abspath()
-          #TODO : pass this as param of the task
-          debug = True
+
           dgbopt = " --release "
-          if debug is True:
+          if bld.options.bT is 'debug':
             dbgopt = " --debug "
           
           #finding relevant build script
