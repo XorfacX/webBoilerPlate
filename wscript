@@ -100,7 +100,7 @@ def configure(conf):
                     cssThDir = cssNode.make_node(tname)
                     if os.path.exists(cssThDir.abspath()) :
                         shutil.rmtree(cssThDir.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*4)
                     shutil.copytree (thdir.abspath(), cssThDir.abspath() )
             conf.end_msg( cssNode.relpath() )
 
@@ -201,8 +201,8 @@ def configure(conf):
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
         
         android_pub_node = conf.path.find_node("publish").find_node("android")
-        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
         if android_pub_node is None : conf.fatal("Cannot find publish/android path")
+        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
         if android_proj_node is None :
             conf.end_msg("failed","RED")
             #detecting nodeJS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
@@ -229,9 +229,12 @@ def configure(conf):
   
         #find assets/www dir
         assetswww_dir = android_proj_node.find_dir('assets').find_dir('www')
-        if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
-        #cleaning basic cordova project
-        for todel in ['css','img','js','res','spec','index.html','main.js','spec.html']:
+        if assetswww_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
+        #cleaning basic cordova project for automatically added items and for old build item
+        #TODO what about ? '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico'
+        #TODO why not delete everything except cordova.js (and maybe master.css) ?
+        #TODO what if we need cordova.js in the project use ??
+        for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
           delnode = assetswww_dir.find_node(todel)
           if delnode is not None :
               if os.path.isdir(delnode.relpath()) : 
@@ -239,7 +242,13 @@ def configure(conf):
                   if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
               elif os.path.isfile(delnode.relpath()) :
                   os.remove(delnode.relpath())
-    # end of conf.env.PLATFORM == 'android'
+    
+    elif conf.env.PLATFORM == 'chrome' :
+        #TODO create a proj_node like for android for easiest computation
+        #TODO create default manifest and _locales folder when not found
+        pass
+
+    # end of conf.env.PLATFORM handling
 
 
     #running configure in tools
@@ -577,8 +586,8 @@ def build(bld):
         chronode = bld.path.get_src().find_dir("publish/chrome_store")
         if chronode is None : # TODO : setup basic chrome_store structure
             bld.fatal("chrome_store not found")
-            
-          #manifest version change task
+        
+        #manifest version change task
         def mnfst_version_change(task):
             src = task.inputs[0]
             tg = task.outputs[0].abspath()
@@ -627,18 +636,19 @@ def build(bld):
         for cpfiles in ['_locales','ico16.png','ico128.png'] :
             cpnode = chronode.get_src().find_node(cpfiles)
             if cpnode is None : bld.fatal(os.path.join(cpnode.get_src().relpath(),cpfiles) + " not found. Aborting.")
-            if os.path.isdir(cpnode.abspath()) :
-                bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
-                if os.path.exists(bld_cpnode.abspath()) :
-                    shutil.rmtree(bld_cpnode.abspath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
-                res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
             else :
-                srccp = cpnode.get_src().abspath();
-                tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath();
-                if not os.path.exists(os.path.dirname(tgtcp)) :
-                    os.makedirs(os.path.dirname(tgtcp))
-                res = shutil.copy(srccp,tgtcp)
+                if os.path.isdir(cpnode.abspath()) :
+                    bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
+                    if os.path.exists(bld_cpnode.abspath()) :
+                        shutil.rmtree(bld_cpnode.abspath())
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                    res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
+                else :
+                    srccp = cpnode.get_src().abspath();
+                    tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath();
+                    if not os.path.exists(os.path.dirname(tgtcp)) :
+                        os.makedirs(os.path.dirname(tgtcp))
+                    res = shutil.copy(srccp,tgtcp)
         return res
 
 def doc(bld):
