@@ -30,6 +30,7 @@ DIJIT = 1 #do we use dijit ?
 DIJIT_THEMES = ['nihilo'] #set the list of dijit themes we want to build
 
 BUILDTYPES = 'debug release'
+ENV_FN = 'Environment.js' #platform env file
 WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder deletion to occur
 
 top = '.'
@@ -484,7 +485,7 @@ def build(bld):
                    'css/*.css',
                    'content/*.*',
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav',
-                   '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess']
+                   '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico']
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
             if static.relpath().find(".*ignore") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore                
                 bld(
@@ -588,8 +589,6 @@ def build(bld):
             else :
                 mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
                 mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
-            #TODO: probably simpler to use json parser if possible
-            #mnfst = json.load(src)
             #TODO : handl errors here
             mnfst_bld_file = open(tg,'w')
             mnfst_bld_file.write(mnfst_str)
@@ -608,7 +607,7 @@ def build(bld):
         
         #Environment.js concat with chrome specific
         baseEnvNode = scripts_dir.get_src().find_node(ENV_FN)
-        chroEnvNode = chronode.find_node(ENV_FN)        
+        chroEnvNode = chronode.find_node(ENV_FN)
         if chroEnvNode is not None :
             if baseEnvNode is None :
                 shutil.copy(chroEnvNode.abspath(),bldnode.make_node(chroEnvNode.path_from(chronode)).abspath())
@@ -617,7 +616,7 @@ def build(bld):
                     chroEnvFile = chrof.read()
                     with open(baseEnvNode.abspath()) as basef:
                         baseEnvFile = basef.read()
-                        unbuiltEnv_node = bldnode.make_node(ENV_FN)   # +'.uc.js')
+                        unbuiltEnv_node = bldnode.make_node(ENV_FN)  # +'.uc.js')
                         with open(unbuiltEnv_node.abspath(), "w") as unbuitEnvFile:
                             unbuitEnvFile.write(baseEnvFile)
                             unbuitEnvFile.write(chroEnvFile)
