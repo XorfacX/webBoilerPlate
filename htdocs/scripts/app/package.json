@@ -7,12 +7,12 @@
             "name": "XorfacX",
             "email": "xorfacx@fairydwarves.com"
         }
-  ],
-  "contributors":[ {
+    ],
+    "contributors":[ {
             "name": "XorfacX",
             "email": "xorfacx@fairydwarves.com"
         }
-  ],
+    ],
     "bugs": "http://www.hostedredmine.com/projects/fairydwarves_05/issues",
     "licenses": [
          {
@@ -21,12 +21,12 @@
     ],
     
     "repository": {
-    "type":"git",
-    "url":"https://github.com/XorfacX/webBoilerPlate.git", 
-    "path": "htdocs/app"
-  },    
+        "type":"git",
+        "url":"https://github.com/XorfacX/webBoilerPlate.git", 
+        "path": "htdocs/app"
+    },    
     
-    "main": "./main",
+    "main": "./app",
     "dojoBuild": "package.js",
     "dependencies": {
         "dojo": "1.9.3"

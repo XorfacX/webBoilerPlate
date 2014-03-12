@@ -56,9 +56,9 @@ var profile = (function () {
                 customBase: true,
                 boot: true
             },
-            "app/main": { //APP LAYER
+            "app/app": { //APP LAYER
                 include: [
-                    "app/main" //should include others app module
+                    "app/app" //should include others app module
                 ],
                 exclude: [
                     //sometimes u need to exclude duplicated dojo module from the app layer, do it here
