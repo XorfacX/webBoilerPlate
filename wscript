@@ -336,7 +336,7 @@ def build(bld):
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
         def buildApp(profnode):
-            bld.start_msg("Building " + profnode.relpath() )
+            print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
             app_build_proc = subprocess.Popen(
@@ -347,9 +347,10 @@ def build(bld):
             )
             out,err = app_build_proc.communicate()
             if app_build_proc.returncode == 0 :
-                bld.to_log(out)
-                bld.to_log(err)
-                bld.end_msg( "OK","GREEN")
+                if out is not None and out.strip() != "" :
+                    print out
+                if err is not None and err.strip() != "" :
+                    print err
                 return True;
             else :
                 bld.end_msg("failed","RED")
@@ -357,6 +358,7 @@ def build(bld):
 
         def cpBuild(task):
             #look for built result
+            appBuild_dir = bld.path.get_src().find_dir('htdocs').find_dir('scripts').find_dir(jsOut)
             dojobuildnode = appBuild_dir.find_dir('dojo')
             if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
 
@@ -482,7 +484,7 @@ def build(bld):
             if appIsBuilt:
                 #print "Removing App build folder"
                 shutil.rmtree(appBuild_dir.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*100) #folder w numerous files, needs a lot of time to be properly removed
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*150) #folder w numerous files, needs a lot of time to be properly removed
             buildApp(profnode)
 
         #copy dojo task call
