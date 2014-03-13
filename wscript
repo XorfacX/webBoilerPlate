@@ -78,7 +78,7 @@ def configure(conf):
                     shutil.rmtree(dst_file)
                     if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
                 shutil.move(src_file, dst_file)
-            conf.end_msg(scriptsnode.relpath() + " : " + ', '.join(files)) # scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
+            conf.end_msg(scriptsnode.relpath() + " : [" + ', '.join(files)+ "]")
         else : #FILE HANDLING
             conf.start_msg("Retrieving " + depend )
             shutil.copy(dependNode.abspath(),scriptsnode.abspath())
