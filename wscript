@@ -105,7 +105,7 @@ def configure(conf):
             conf.end_msg( cssNode.relpath() )
 
         # Copying doh for testing purposes into our tests directory
-        testsnode =  conf.path.find_dir('tests')
+        testsnode =  scriptsnode.find_dir('app').find_dir('tests')
         if testsnode is not None :
             dohnode = scriptsnode.find_dir('util/doh')
             if dohnode is None : conf.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
