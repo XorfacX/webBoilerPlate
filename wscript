@@ -21,7 +21,6 @@ import time;
 
 APPNAME = 'webRoot' #set Your Project Name Here
 VERSION = '1' #set Your Project Version Here (only used internally by waf on build)
-ENGINES = 'dojo'  #nb: we should think about cleaning this from here or from depends/wscript ...
 
 ANDROID_PACKAGE = "com.fairydwarves.webboilerplate" #set your android package identifier when applicable
 ANDROID_PROJECT = "webBoilerPlate" #set your android app name when applicable
@@ -93,6 +92,8 @@ def configure(conf):
             if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
             conf.start_msg( "Extracting Dijit Themes ")
             cssNode = htdocsnode.find_node("css")
+            #copying dijit.css
+            shutil.copy(dijitthemes.find_node("dijit.css").get_src().abspath(), cssNode.abspath() )
             #copying dijit themes (not built)
             for tname in DIJIT_THEMES :
                 thdir = dijitthemes.find_dir(tname)
@@ -498,7 +499,7 @@ def build(bld):
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav',
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico']
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
-            if static.relpath().find(".*ignore") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore                
+            if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added 
                 bld(
                     rule=cp_task,
                     source=static.get_src(),
