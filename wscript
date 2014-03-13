@@ -104,6 +104,17 @@ def configure(conf):
                         if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*4)
                     shutil.copytree (thdir.abspath(), cssThDir.abspath() )
             conf.end_msg( cssNode.relpath() )
+            
+            #copying dijit/icons into htdocs/icons
+            dijiticons = scriptsnode.find_node("dijit/icons")
+            if dijiticons is None : conf.fatal("dijit/icons for dijit icons was not found in build directory. Cannot continue.")
+            conf.start_msg( "Extracting Dijit Icons ")
+            htdocsIconsNode = htdocsnode.make_node("icons") 
+            if os.path.exists(htdocsIconsNode.abspath()) :
+                shutil.rmtree(htdocsIconsNode.abspath())
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
+            shutil.copytree (dijiticons.abspath(), htdocsIconsNode.abspath() )
+            conf.end_msg( htdocsIconsNode.relpath() )
 
         # Copying doh for testing purposes into our tests directory
         testsnode =  scriptsnode.find_dir('app').find_dir('tests')
