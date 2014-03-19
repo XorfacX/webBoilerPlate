@@ -30,7 +30,9 @@ var profile = (function () {
         }, {
             name: "app",
             location: dojoP + "app"
-        }],
+        }
+        //CONTINUE THE LIST OF YOUR PACKAGE HERE
+        ],
 
         layers: {
             "dojo/dojo": { //DOJO LAYER
@@ -64,7 +66,7 @@ var profile = (function () {
                     //sometimes u need to exclude duplicated dojo module from the app layer, do it here
                 ]
             }
-            //CONTINUE LIST OF LAYERS HERE (like FDwebGE etc)
+            //CONTINUE LIST OF LAYERS HERE (DONT FORGET TO ADD YOUR LINKED PACKAGE TOO !)
         },
 
         //SPECIFY YOUR OWN staticHasFeatures list BELOW

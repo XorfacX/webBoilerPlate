@@ -112,7 +112,7 @@ def configure(conf):
             htdocsIconsNode = htdocsnode.make_node("icons") 
             if os.path.exists(htdocsIconsNode.abspath()) :
                 shutil.rmtree(htdocsIconsNode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*15)
             shutil.copytree (dijiticons.abspath(), htdocsIconsNode.abspath() )
             conf.end_msg( htdocsIconsNode.relpath() )
 
