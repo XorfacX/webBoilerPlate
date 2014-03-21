@@ -8,7 +8,7 @@ It uses:
 * javascript framework: dojo
 * script tool: waf
 * build tool: closure compiler
-* build scripts: dojo.profile.js and app.profile.js which must be updated to fit your project
+* build script: app.profile.js which must be updated to fit your project
 
 
 HowTo
