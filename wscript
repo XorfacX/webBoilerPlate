@@ -503,7 +503,7 @@ def build(bld):
         bld( rule = cpBuild ) #TODO look if we must set this task call to precede android build task
         
         #static files
-        statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 
+        statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 'images/**/*.svg',
                    'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/.htaccess',
                    'css/*.css',
                    'content/*.*',
