@@ -383,11 +383,12 @@ def build(bld):
 
                 #concat ENV_FN into build App
                 if bld.env.PLATFORM == 'chrome' :
-                    chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
-                    if chroEnvBuildNode is not None :
+                    chroEnvNode = chronode.find_node(ENV_FN)
+                    if chroEnvNode is not None :
+                        chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
                         bld(
                             rule = cbuild_task,
-                            source = chronode.find_node(ENV_FN).get_src(),
+                            source = chroEnvNode.get_src(),
                             target = chroEnvBuildNode,
                             name = "buildChromeEnv_task"
                         )
