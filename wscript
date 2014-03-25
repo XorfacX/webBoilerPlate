@@ -112,7 +112,7 @@ def configure(conf):
             htdocsIconsNode = htdocsnode.make_node("icons") 
             if os.path.exists(htdocsIconsNode.abspath()) :
                 shutil.rmtree(htdocsIconsNode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*15)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*40)
             shutil.copytree (dijiticons.abspath(), htdocsIconsNode.abspath() )
             conf.end_msg( htdocsIconsNode.relpath() )
 
@@ -302,6 +302,15 @@ def build(bld):
       if os.path.isdir(src) : return shutil.copytree(src,tg)
       elif os.path.isfile(src) : return shutil.copy(src,tg)
 
+    #define an append to eof file task
+    def appendToFile_task(task):
+        src = task.inputs[0].abspath()
+        tg = task.outputs[0].abspath()
+        with file(src) as srcf:
+            content = srcf.read()
+            with open(tg, "a") as tgf:
+                tgf.write("\n" + content)
+
     #define a closure build task
     def cbuild_task(task):
       src = task.inputs[0].abspath()
@@ -344,10 +353,15 @@ def build(bld):
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
             assetswwwscriptsdojo_dir.mkdir()
     #end PLATFORM android
+    elif bld.env.PLATFORM == 'chrome' :
+        # find chrome_store folder
+        chronode = bld.path.get_src().find_dir("publish/chrome_store")
+        if chronode is None : # TODO : setup basic chrome_store structure
+            bld.fatal("chrome_store not found")
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
-        def buildApp(profnode):
+        def buildApp(profnode, appBuild_dir, chronode):
             print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
@@ -363,6 +377,24 @@ def build(bld):
                     print out
                 if err is not None and err.strip() != "" :
                     print err
+
+                #concat ENV_FN into build App
+                if bld.env.PLATFORM == 'chrome' :
+                    chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
+
+                    bld(
+                        rule = cbuild_task,
+                        source = chronode.find_node(ENV_FN).get_src(),
+                        target = appBuild_dir.make_node('publish/' + ENV_FN),
+                        name = "buildChromeEnv_task"
+                    )
+                    bld (
+                        rule = appendToFile_task,
+                        source = chroEnvBuildNode,
+                        target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
+                        after = "buildChromeEnv_task"
+                    )
+
                 return True;
             else :
                 bld.end_msg("failed","RED")
@@ -375,7 +407,7 @@ def build(bld):
             if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
 
             #copy built file from build dir to wbuild keeping the structure
-            for filefolder in ['app', 'dojo']: #NB: might need in the future"dojox/mobile/deviceTheme.js"
+            for filefolder in ['app', 'dojo']: #NB: might need in the future "dojox/mobile/deviceTheme.js"
                 extensions = ['js']
                 if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
                     extensions.extend(['js.uncompressed.js', 'js.map'])
@@ -449,7 +481,7 @@ def build(bld):
                         #print bldCssThNode.abspath()
                         if os.path.exists(bldCssThNode.abspath()) :
                             shutil.rmtree(bldCssThNode.abspath())
-                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
                         #print _thdir.find_node(tname + ".css").abspath()
                         #print bldCssThNode.abspath()
                         bldCssThNode.mkdir()
@@ -491,13 +523,13 @@ def build(bld):
         appIsBuilt = appBuild_dir is not None
         if bld.options.partial:
             if not appIsBuilt:
-                buildApp(profnode)
+                buildApp(profnode, appBuild_dir, chronode)
         else:
             if appIsBuilt:
                 #print "Removing App build folder"
                 shutil.rmtree(appBuild_dir.abspath())
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*150) #folder w numerous files, needs a lot of time to be properly removed
-            buildApp(profnode)
+            buildApp(profnode, appBuild_dir, chronode)
 
         #copy dojo task call
         bld( rule = cpBuild ) #TODO look if we must set this task call to precede android build task
@@ -596,11 +628,6 @@ def build(bld):
         )
 
     elif bld.env.PLATFORM == 'chrome' :
-        # find chrome_store folder
-        chronode = bld.path.get_src().find_dir("publish/chrome_store")
-        if chronode is None : # TODO : setup basic chrome_store structure
-            bld.fatal("chrome_store not found")
-        
         #manifest version change task
         def mnfst_version_change(task):
             src = task.inputs[0]
@@ -628,24 +655,6 @@ def build(bld):
                 target = bldnode.make_node(mnfstnode.path_from(chronode))
             )
         
-        #Environment.js concat with chrome specific
-        baseEnvNode = scripts_dir.get_src().find_node(ENV_FN)
-        chroEnvNode = chronode.find_node(ENV_FN)
-        if chroEnvNode is not None :
-            if baseEnvNode is None :
-                shutil.copy(chroEnvNode.abspath(),bldnode.make_node(chroEnvNode.path_from(chronode)).abspath())
-            else :
-                with file(chroEnvNode.abspath()) as chrof:
-                    chroEnvFile = chrof.read()
-                    with open(baseEnvNode.abspath()) as basef:
-                        baseEnvFile = basef.read()
-                        unbuiltEnv_node = bldnode.make_node(ENV_FN)  # +'.uc.js')
-                        with open(unbuiltEnv_node.abspath(), "w") as unbuitEnvFile:
-                            unbuitEnvFile.write(baseEnvFile)
-                            unbuitEnvFile.write(chroEnvFile)
-                            
-                        #TODO BUILD unbuiltEnv_node here
-        
         #copying chrome publish files
         for cpfiles in ['_locales','ico16.png','ico128.png'] :
             cpnode = chronode.get_src().find_node(cpfiles)
@@ -655,7 +664,7 @@ def build(bld):
                     bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
                     if os.path.exists(bld_cpnode.abspath()) :
                         shutil.rmtree(bld_cpnode.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION) #sleep to allow deletion on Windows
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10) #sleep to allow deletion on Windows
                     res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
                 else :
                     srccp = cpnode.get_src().abspath();
