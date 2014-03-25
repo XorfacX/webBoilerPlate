@@ -283,6 +283,7 @@ def build(bld):
     bldnode=bld.path.get_bld()
     bldscriptsnode = bldnode.make_node('scripts')
     bldscriptsnode.mkdir()
+    chronode = None
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
@@ -360,16 +361,16 @@ def build(bld):
             bld.fatal("chrome_store not found")
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
-        #define how to build apphttp://livedocs.dojotoolkit.org/build/buildSystem
-        def buildApp(profnode, appBuild_dir, chronode):
+        #define how to build app http://livedocs.dojotoolkit.org/build/buildSystem
+        def buildApp(profnode, chronode):
             print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
             app_build_proc = subprocess.Popen(
-            shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
-            cwd= bsnode.abspath(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+                shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
+                cwd= bsnode.abspath(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
             out,err = app_build_proc.communicate()
             if app_build_proc.returncode == 0 :
@@ -378,22 +379,24 @@ def build(bld):
                 if err is not None and err.strip() != "" :
                     print err
 
+                appBuild_dir = scripts_dir.find_dir(jsOut)
+
                 #concat ENV_FN into build App
                 if bld.env.PLATFORM == 'chrome' :
                     chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
-
-                    bld(
-                        rule = cbuild_task,
-                        source = chronode.find_node(ENV_FN).get_src(),
-                        target = appBuild_dir.make_node('publish/' + ENV_FN),
-                        name = "buildChromeEnv_task"
-                    )
-                    bld (
-                        rule = appendToFile_task,
-                        source = chroEnvBuildNode,
-                        target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
-                        after = "buildChromeEnv_task"
-                    )
+                    if chroEnvBuildNode is not None :
+                        bld(
+                            rule = cbuild_task,
+                            source = chronode.find_node(ENV_FN).get_src(),
+                            target = chroEnvBuildNode,
+                            name = "buildChromeEnv_task"
+                        )
+                        bld (
+                            rule = appendToFile_task,
+                            source = chroEnvBuildNode,
+                            target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
+                            after = "buildChromeEnv_task"
+                        )
 
                 return True;
             else :
@@ -523,13 +526,13 @@ def build(bld):
         appIsBuilt = appBuild_dir is not None
         if bld.options.partial:
             if not appIsBuilt:
-                buildApp(profnode, appBuild_dir, chronode)
+                buildApp(profnode, chronode)
         else:
             if appIsBuilt:
                 #print "Removing App build folder"
                 shutil.rmtree(appBuild_dir.abspath())
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*150) #folder w numerous files, needs a lot of time to be properly removed
-            buildApp(profnode, appBuild_dir, chronode)
+            buildApp(profnode, chronode)
 
         #copy dojo task call
         bld( rule = cpBuild ) #TODO look if we must set this task call to precede android build task
