@@ -112,7 +112,7 @@ def configure(conf):
             htdocsIconsNode = htdocsnode.make_node("icons") 
             if os.path.exists(htdocsIconsNode.abspath()) :
                 shutil.rmtree(htdocsIconsNode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*40)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*60)
             shutil.copytree (dijiticons.abspath(), htdocsIconsNode.abspath() )
             conf.end_msg( htdocsIconsNode.relpath() )
 
@@ -287,7 +287,7 @@ def build(bld):
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
-      bld.fatal("The build type " + bld.options.bT + " is unknown. Please use one of those [" + BUILDTYPES +"]")
+        bld.fatal("The build type " + bld.options.bT + " is unknown. Please use one of those [" + BUILDTYPES +"]")
 
     #running build in depends
     depends_dir = bld.path.get_src().find_dir('depends')
@@ -298,10 +298,10 @@ def build(bld):
 
     #define a portable copy task
     def cp_task(task):
-      src = task.inputs[0].abspath()
-      tg = task.outputs[0].abspath()
-      if os.path.isdir(src) : return shutil.copytree(src,tg)
-      elif os.path.isfile(src) : return shutil.copy(src,tg)
+        src = task.inputs[0].abspath()
+        tg = task.outputs[0].abspath()
+        if os.path.isdir(src) : return shutil.copytree(src,tg)
+        elif os.path.isfile(src) : return shutil.copy(src,tg)
 
     #define an append to eof file task
     def appendToFile_task(task):
@@ -314,27 +314,27 @@ def build(bld):
 
     #define a closure build task
     def cbuild_task(task):
-      src = task.inputs[0].abspath()
-      tg = task.outputs[0].abspath()
-      #TODO
-      adv_opti = False; # still buggy
-      #(adv_opti is True ? adv = " --compilation_level ADVANCED_OPTIMIZATIONS " : adv = "")
-      adv = ""
-      if adv_opti is True:
-        adv = " --compilation_level ADVANCED_OPTIMIZATIONS "
+        src = task.inputs[0].abspath()
+        tg = task.outputs[0].abspath()
+        #TODO
+        adv_opti = False; # still buggy
+        #(adv_opti is True ? adv = " --compilation_level ADVANCED_OPTIMIZATIONS " : adv = "")
+        adv = ""
+        if adv_opti is True:
+            adv = " --compilation_level ADVANCED_OPTIMIZATIONS "
       
-      cbuild_proc = subprocess.Popen(shlex.split("java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT"),
+        cbuild_proc = subprocess.Popen(shlex.split("java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT"),
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-      out,err = cbuild_proc.communicate()
+        out,err = cbuild_proc.communicate()
 
-      if ( cbuild_proc.returncode != 0 ) :
-        bld.fatal("Closure Compiler failed. Error : \n" + err)
-      else :
-        if out is not None and out.strip() != "" :
-          print out
-        if err is not None and err.strip() != "" :
-          print err
-      return cbuild_proc.returncode
+        if ( cbuild_proc.returncode != 0 ) :
+            bld.fatal("Closure Compiler failed. Error : \n" + err)
+        else :
+            if out is not None and out.strip() != "" :
+                print out
+            if err is not None and err.strip() != "" :
+                print err
+        return cbuild_proc.returncode
 
       
     if bld.env.PLATFORM == 'android' :
@@ -362,7 +362,7 @@ def build(bld):
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build app http://livedocs.dojotoolkit.org/build/buildSystem
-        def buildApp(profnode, chronode):
+        def buildApp(profnode, chroEnvNode):
             print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
@@ -383,23 +383,23 @@ def build(bld):
 
                 #concat ENV_FN into build App
                 if bld.env.PLATFORM == 'chrome' :
-                    chroEnvNode = chronode.find_node(ENV_FN)
                     if chroEnvNode is not None :
                         chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
+                        print "Building and adding platform env " + chroEnvBuildNode.relpath()
                         bld(
                             rule = cbuild_task,
                             source = chroEnvNode.get_src(),
                             target = chroEnvBuildNode,
                             name = "buildChromeEnv_task"
                         )
-                        bld (
+                        bld(
                             rule = appendToFile_task,
                             source = chroEnvBuildNode,
                             target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
-                            after = "buildChromeEnv_task"
+                            after = "buildChromeEnv_task",
+                            before = "copyBuild_task"
                         )
 
-                return True;
             else :
                 bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
@@ -525,18 +525,16 @@ def build(bld):
         if profnode is None: bld.fatal("App build profile was not found. Please run waf configure.")
         appBuild_dir = scripts_dir.find_dir(jsOut)
         appIsBuilt = appBuild_dir is not None
+        chroEnvNode = chronode.make_node(ENV_FN) if (chronode is not None and chronode.find_node(ENV_FN) is not None) else None
         if bld.options.partial:
             if not appIsBuilt:
-                buildApp(profnode, chronode)
+                buildApp(profnode, chroEnvNode)
         else:
             if appIsBuilt:
                 #print "Removing App build folder"
                 shutil.rmtree(appBuild_dir.abspath())
                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*150) #folder w numerous files, needs a lot of time to be properly removed
-            buildApp(profnode, chronode)
-
-        #copy dojo task call
-        bld( rule = cpBuild ) #TODO look if we must set this task call to precede android build task
+            buildApp(profnode, chroEnvNode)
         
         #static files
         statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 'images/**/*.svg',
@@ -546,7 +544,7 @@ def build(bld):
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav',
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico']
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
-            if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added 
+            if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
                 bld(
                     rule=cp_task,
                     source=static.get_src(),
@@ -577,7 +575,14 @@ def build(bld):
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
                     target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir))
                 )
-          
+
+        #copy build task call
+        bld(
+            rule = cpBuild,
+            name = "copyBuild_task",
+            after = "buildApp"
+        ) #TODO look if we must set this task call to precede android/chrome build task
+
     else : bld.fatal("ENGINE has to be dojo. Please run \'./waf configure [ --engine= [ dojo ] ]\'")
   
     if bld.env.PLATFORM == 'android' : 
