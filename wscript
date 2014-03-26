@@ -35,6 +35,7 @@ WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder delet
 top = '.'
 out = 'wbuild'
 jsOut = '_release' #JS build folder name
+jsBuildFiles = ['app/app.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
 
 
 def options(opt):
@@ -404,27 +405,34 @@ def build(bld):
                 bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
 
-        def cpBuild(task):
+        def cpBuild():
             #look for built result
             appBuild_dir = bld.path.get_src().find_dir('htdocs').find_dir('scripts').find_dir(jsOut)
             dojobuildnode = appBuild_dir.find_dir('dojo')
             if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
 
             #copy built file from build dir to wbuild keeping the structure
-            for filefolder in ['app', 'dojo']: #NB: might need in the future "dojox/mobile/deviceTheme.js"
-                extensions = ['js']
-                if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
-                    extensions.extend(['js.uncompressed.js', 'js.map'])
-                for extension in extensions:
-                    print "Extracting " +  filefolder + "." + extension
-                    _srcNode = appBuild_dir.find_dir(filefolder).find_node(filefolder + "." + extension)
-                    if _srcNode is None: bld.fatal("Not found")
-                    bldscriptsnode.make_node(filefolder).mkdir()
-                    _destNode = bldnode.make_node('scripts').make_node(_srcNode.path_from(appBuild_dir))
-                    shutil.copy(_srcNode.abspath(), _destNode.abspath())
-                    if bld.env.PLATFORM == 'android' : #create struct and copy files
-                        assetswwwscripts_dir.make_node(filefolder).mkdir()
-                        shutil.copy(_srcNode.abspath(), assetswwwscripts_dir.make_node(_srcNode.path_from(appBuild_dir)).abspath())
+            if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
+                jsBuildFilesExt = []
+                for jsBuildFile in jsBuildFiles:
+                    jsBuildFilesExt.extend([jsBuildFile + '.uncompressed.js', jsBuildFile + '.map'])
+                jsBuildFiles.extend(jsBuildFilesExt)
+            for jsBuildFile in appBuild_dir.get_src().ant_glob(jsBuildFiles): #warning in case a file defined in jsBuildFiles doesnt exists, it will simply be ignore and no message will appear
+                print "Extracting " + jsBuildFile.get_src().relpath()
+                bld(
+                    rule = cp_task,
+                    source = jsBuildFile.get_src(),
+                    target = bldnode.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)),
+                    after = "buildApp"
+                )# copy them to the build directory
+                if bld.env.PLATFORM == 'android' :
+                    bld(
+                        rule = cp_task,
+                        source = jsBuildFile.get_src(),
+                        target = assetswww_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
+                        after = "buildApp",
+                        before = "androbuild_task"
+                    )
 
             #extracting dojo resources
             print "Extracting Dojo resources"
@@ -577,11 +585,7 @@ def build(bld):
                 )
 
         #copy build task call
-        bld(
-            rule = cpBuild,
-            name = "copyBuild_task",
-            after = "buildApp"
-        ) #TODO look if we must set this task call to precede android/chrome build task
+        cpBuild()
 
     else : bld.fatal("ENGINE has to be dojo. Please run \'./waf configure [ --engine= [ dojo ] ]\'")
   
