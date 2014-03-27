@@ -27,6 +27,7 @@ htdocs/scripts/dijit
 htdocs/scripts/dojox
 htdocs/scripts/util
 htdocs/dojox
+htdocs/icons
 publish/android/**/
 materials/wip
 htdocs/Web*.config
