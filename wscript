@@ -463,21 +463,6 @@ def build(bld):
                         shutil.copy( fname.abspath(), bldscriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
                             shutil.copytree(bldscriptsdnlsnode.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
-        
-                #copying dijit nls as its not working though profile bug #248006
-                print "Extracting Dijit Localization resources"
-                for dcmpnt in ['dijit/nls/loading.js','dijit/nls/common.js','dijit/form/nls/validate.js','dijit/form/nls/Textarea.js'] : 
-                    dcnode = appBuild_dir.get_src().find_node(dcmpnt)
-                    if dcnode is None : bld.fatal(os.path.join(appBuild_dir.get_src().relpath(),dcmpnt) + " not found. Aborting.")
-                    srccp = dcnode.get_src().abspath()
-                    tgtcp = bldscriptsnode.make_node(dcnode.path_from(appBuild_dir)).abspath();
-                    if not os.path.exists(os.path.dirname(tgtcp)) :
-                        os.makedirs(os.path.dirname(tgtcp))
-                    res = shutil.copy(srccp,tgtcp)
-                    if bld.env.PLATFORM == 'android' :
-                        assetswwwscripts_dir.make_node('dijit/nls').mkdir()
-                        assetswwwscripts_dir.make_node('dijit/form/nls').mkdir()
-                        shutil.copy(srccp, assetswwwscripts_dir.make_node(dcnode.path_from(appBuild_dir)).abspath())
 
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
