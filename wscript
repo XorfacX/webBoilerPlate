@@ -118,19 +118,20 @@ def configure(conf):
             conf.end_msg( htdocsIconsNode.relpath() )
 
         # Copying doh for testing purposes into our tests directory
-        testsnode =  scriptsnode.find_dir('app').find_dir('tests')
-        if testsnode is not None :
-            dohnode = scriptsnode.find_dir('util/doh')
-            if dohnode is None : conf.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
+        if scriptsnode.find_dir('app') is not None : #todo hard coded name, fixed it
+            testsnode =  scriptsnode.find_dir('app').find_dir('tests')
+            if testsnode is not None :
+                dohnode = scriptsnode.find_dir('util/doh')
+                if dohnode is None : conf.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
   
-            dohdstnode = testsnode.make_node('doh')
-            conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
-            if os.path.exists(dohdstnode.relpath()) :
-                shutil.rmtree(dohdstnode.relpath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
-            shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
-            conf.end_msg( "ok" )
-        #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
+                dohdstnode = testsnode.make_node('doh')
+                conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
+                if os.path.exists(dohdstnode.relpath()) :
+                    shutil.rmtree(dohdstnode.relpath())
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
+                shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
+                conf.end_msg( "ok" )
+            #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
 
         if conf.env.PLATFORM == 'android':
 
@@ -511,7 +512,7 @@ def build(bld):
         scripts_dir = htdocs_dir.find_dir('scripts')
         if scripts_dir is None : bld.fatal("htdocs/scripts subfolder was not found. Cannot continue.")
         app_dir = scripts_dir.find_dir('app')
-        if app_dir is None : bld.fatal("htdocs/scripts/app subfolder was not found. Cannot continue.")
+        if app_dir is None : print "Notice: htdocs/scripts/app subfolder not found. Switching to irregular folder archi mode."
 
         #building app but remove already built first
         profnode = depends_dir.find_node(bld.env.BUILD_PROFILE)
