@@ -223,7 +223,7 @@ def configure(conf):
             if detect_nodeJS():
                 conf.start_msg("Building Cordova Project")
                 cordova_create_proc = subprocess.Popen(
-                    cordova_create_node.abspath() + " " + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + " " + ANDROID_PACKAGE + " " + ANDROID_PROJECT,
+                    "\"" + cordova_create_node.abspath() + "\" \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + " \"" + ANDROID_PROJECT + "\"",
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     shell=True
