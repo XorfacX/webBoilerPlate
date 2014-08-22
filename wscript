@@ -20,7 +20,7 @@ from string import Template
 import platform
 import time
 
-APPNAME = 'webRoot' #set Your Project Name Here
+APPNAME = 'webBoilerPlate' #set Your Project Name Here
 VERSION = '1' #set Your Project Version Here (only used internally by waf on build)
 
 ANDROID_PACKAGE = "com.fairydwarves.webboilerplate" #set your android package identifier when applicable
@@ -247,14 +247,19 @@ def configure(conf):
         #TODO why not delete everything except cordova.js (and maybe master.css) ?
         #TODO what if we need cordova.js in the project use ??
         for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
-          delnode = assetswww_dir.find_node(todel)
-          if delnode is not None :
-              if os.path.isdir(delnode.relpath()) :
-                  removeLoc(delnode.relpath())
-              elif os.path.isfile(delnode.relpath()) :
-                  os.remove(delnode.relpath())
+            delnode = assetswww_dir.find_node(todel)
+            if delnode is not None :
+                if os.path.isdir(delnode.relpath()) :
+                    removeLoc(delnode.relpath())
+                elif os.path.isfile(delnode.relpath()) :
+                    os.remove(delnode.relpath())
     
     elif conf.env.PLATFORM == 'chrome' :
+        #TODO create a proj_node like for android for easiest computation
+        #TODO create default manifest and _locales folder when not found
+        pass
+
+    elif conf.env.PLATFORM == 'facebook' :
         #TODO create a proj_node like for android for easiest computation
         #TODO create default manifest and _locales folder when not found
         pass
@@ -282,7 +287,10 @@ def build(bld):
     bldnode = bld.path.get_bld()
     bldscriptsnode = bldnode.make_node('scripts')
     bldscriptsnode.mkdir()
+
+    #platform specifics
     chronode = None
+    fbnode = None
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
@@ -294,7 +302,7 @@ def build(bld):
     else :
         #print depends_dir.abspath()
         bld.recurse('depends')
-
+    
     # Remove a location
     # In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
     def removeLoc(location):
@@ -349,7 +357,23 @@ def build(bld):
                 print err
         return cbuild_proc.returncode
 
-      
+    #manifest version change task
+    def mnfst_version_change(task):
+        src = task.inputs[0]
+        tg = task.outputs[0].abspath()
+        #get git commits count http://stackoverflow.com/questions/677436/how-to-get-the-git-commit-count
+        git_count_proc = subprocess.Popen(shlex.split("git rev-list HEAD --count"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out,err = git_count_proc.communicate()
+        if git_count_proc.returncode != 0 : bld.fatal("Cannot determine current git count to set version.")
+        else :
+            mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
+            mnfst_str = mnfst_str_tmpl.substitute(version = VERSION + "." + out.strip())
+        #TODO : handl errors here
+        mnfst_bld_file = open(tg,'w')
+        mnfst_bld_file.write(mnfst_str)
+        mnfst_bld_file.close()
+        return 0
+
     if bld.env.PLATFORM == 'android' :
         #find publish dir
         pubandroid_dir = bld.path.get_src().find_dir('publish').find_dir('android').find_dir(ANDROID_PROJECT)
@@ -370,6 +394,12 @@ def build(bld):
         chronode = bld.path.get_src().find_dir("publish/chrome_store")
         if chronode is None : # TODO : setup basic chrome_store structure
             bld.fatal("chrome_store not found")
+
+    elif bld.env.PLATFORM == 'facebook' :
+        # find chrome_store folder
+        fbnode = bld.path.get_src().find_dir("publish/facebook")
+        if fbnode is None : # TODO : setup basic facebook structure
+            bld.fatal("fbnode not found")
   
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build app http://livedocs.dojotoolkit.org/build/buildSystem
@@ -391,19 +421,21 @@ def build(bld):
                 appBuild_dir = scripts_dir.find_dir(jsOut)
 
                 #concat ENV_FN into build App
-                if bld.env.PLATFORM == 'chrome' :
-                    if chroEnvNode is not None :
-                        chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
-                        print "Building and adding platform env " + chroEnvBuildNode.relpath()
+                if bld.env.PLATFORM == 'chrome' or bld.env.PLATFORM == 'facebook':
+                    if platfEnvNode is not None :
+                        platfEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
+                        print "Building and adding platform env " + platfEnvBuildNode.relpath()
+
                         bld(rule = cbuild_task,
-                            source = chroEnvNode.get_src(),
-                            target = chroEnvBuildNode,
-                            name = "buildChromeEnv_task")
+                            source = platfEnvNode.get_src(),
+                            target = platfEnvBuildNode,
+                            name = "buildPlatfEnv_task")
+
                         bld(rule = appendToFile_task,
-                            source = chroEnvBuildNode,
+                            source = platfEnvBuildNode,
                             target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
-                            after = "buildChromeEnv_task",
-                            before = "copyBuild_task")
+                            after = "buildPlatfEnv_task",
+                            before = "cpBuild")
 
             else :
                 bld.end_msg("failed","RED")
@@ -507,14 +539,21 @@ def build(bld):
         if profnode is None: bld.fatal("App build profile was not found. Please run waf configure.")
         appBuild_dir = scripts_dir.find_dir(jsOut)
         appIsBuilt = appBuild_dir is not None
-        chroEnvNode = chronode.make_node(ENV_FN) if (chronode is not None and chronode.find_node(ENV_FN) is not None) else None
+
+        platfEnvNode = None
+        if bld.env.PLATFORM == 'chrome' :
+            platfEnvNode = chronode.make_node(ENV_FN) if (chronode is not None and chronode.find_node(ENV_FN) is not None) else None
+        elif bld.env.PLATFORM == 'facebook':
+            platfEnvNode = fbnode.make_node(ENV_FN) if (fbnode is not None and fbnode.find_node(ENV_FN) is not None) else None
+
         if bld.options.partial:
             if not appIsBuilt:
-                buildApp(profnode, chroEnvNode)
+                buildApp(profnode, platfEnvNode)
         else:
             if appIsBuilt:
+                #print "Removing App build folder"
                 removeLoc(appBuild_dir.abspath())
-            buildApp(profnode, chroEnvNode)
+            buildApp(profnode, platfEnvNode)
         
         #static files
         statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 'images/**/*.svg',
@@ -602,22 +641,6 @@ def build(bld):
             always = True)
 
     elif bld.env.PLATFORM == 'chrome' :
-        #manifest version change task
-        def mnfst_version_change(task):
-            src = task.inputs[0]
-            tg = task.outputs[0].abspath()
-            #get git commits count http://stackoverflow.com/questions/677436/how-to-get-the-git-commit-count
-            git_count_proc = subprocess.Popen(shlex.split("git rev-list HEAD --count"),cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out,err = git_count_proc.communicate()
-            if git_count_proc.returncode != 0 : bld.fatal("Cannot determine current git count to set version.")
-            else :
-                mnfst_str_tmpl = Template(src.read()) #template to do $var based substitution, not to get mixed with json syntax
-                mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
-            #TODO : handl errors here
-            mnfst_bld_file = open(tg,'w')
-            mnfst_bld_file.write(mnfst_str)
-            mnfst_bld_file.close()
-            return 0
             
         #manifest.json needed for chrome
         mnfstnode = chronode.find_node("manifest.json")
@@ -643,6 +666,16 @@ def build(bld):
                         os.makedirs(os.path.dirname(tgtcp))
                     res = shutil.copy(srccp,tgtcp)
         return res
+
+    elif bld.env.PLATFORM == 'facebook' :
+            
+        #manifest.json needed for chrome
+        mnfstnode = fbnode.find_node("manifest.json")
+        if mnfstnode is None : bld.fatal("manifest.json not found")
+        else :
+            bld(rule=mnfst_version_change,
+                source = mnfstnode,
+                target = bldnode.make_node(mnfstnode.path_from(fbnode)))
 
 def doc(bld):
     """automatically generates the documentation with jsdoc"""
@@ -705,7 +738,7 @@ def run(ctx): # this is a buildcontext
 
 
   #TODO : fix / update this
-  if ctx.env.PORT == "fdweb" or ctx.env.PORT == "local" :
+  if ctx.env.PORT == "web" or ctx.env.PORT == "local" or ctx.env.PORT == "facebook":
     #define a task to run firefox
     def firefox_task(task):
       src = task.inputs[0].abspath()
@@ -750,12 +783,6 @@ def run(ctx): # this is a buildcontext
         source = startnode)
 
     #TODO : check how to finish waf before running stuff here ( run is not a test, just a help function to run with proper parameters )
-  
-  elif ctx.env.PORT == "chrome" :
-    #define a task to run chrome
-    #TODO : run on device ( or emulator ) via cordova
-    pass  
-    
     
 def dist(ctx):
   """package the build result to be delivered to the platform ( local )"""

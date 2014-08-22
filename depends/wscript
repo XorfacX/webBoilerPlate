@@ -13,7 +13,7 @@ import subprocess
 import platform
 
 ENGINES = 'dojo'
-PLATFORMS = 'android local chrome owa' #list of supported platforms
+PLATFORMS = 'android local chrome owa facebook' #list of supported platforms
 MARKDOWN = 0 #enable or disable markdown parser dependency
 LZSTRING = 0 #enable or disable lz-string dependency
 
