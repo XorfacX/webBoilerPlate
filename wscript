@@ -63,6 +63,19 @@ def configure(conf):
     scriptsnode = htdocsnode.find_dir('scripts')
     if scriptsnode is None : conf.fatal("htdocs/scripts/ subfolder was not found. Cannot continue.")
 
+    # Remove a location
+    # In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
+    def removeLoc(location):
+        while 1:
+            try:
+                if os.path.exists(location):
+                    shutil.rmtree(location)
+                os.makedirs(location)
+                break
+            except:
+                pass
+
+        shutil.rmtree(location)
 
     #copying depends single files and folders cpntent
     for depend in conf.env.DEPENDS:
@@ -76,9 +89,7 @@ def configure(conf):
             for file in files:
                 src_file = os.path.join(dependNode.abspath(), file)
                 dst_file = os.path.join(scriptsnode.abspath(), file)
-                if os.path.exists(dst_file) : #remove existing dir
-                    shutil.rmtree(dst_file)
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                removeLoc(dst_file)
                 shutil.move(src_file, dst_file)
             conf.end_msg(scriptsnode.relpath() + " : [" + ', '.join(files) + "]")
         else : #FILE HANDLING
@@ -101,9 +112,7 @@ def configure(conf):
                 thdir = dijitthemes.find_dir(tname)
                 if thdir is not None :
                     cssThDir = cssNode.make_node(tname)
-                    if os.path.exists(cssThDir.abspath()) :
-                        shutil.rmtree(cssThDir.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 4)
+                    removeLoc(cssThDir.abspath())
                     shutil.copytree(thdir.abspath(), cssThDir.abspath())
             conf.end_msg(cssNode.relpath())
             
@@ -111,10 +120,8 @@ def configure(conf):
             dijiticons = scriptsnode.find_node("dijit/icons")
             if dijiticons is None : conf.fatal("dijit/icons for dijit icons was not found in build directory. Cannot continue.")
             conf.start_msg("Extracting Dijit Icons ")
-            htdocsIconsNode = htdocsnode.make_node("icons") 
-            if os.path.exists(htdocsIconsNode.abspath()) :
-                shutil.rmtree(htdocsIconsNode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 60)
+            htdocsIconsNode = htdocsnode.make_node("icons")
+            removeLoc(htdocsIconsNode.abspath())
             shutil.copytree(dijiticons.abspath(), htdocsIconsNode.abspath())
             conf.end_msg(htdocsIconsNode.relpath())
 
@@ -127,9 +134,7 @@ def configure(conf):
   
                 dohdstnode = testsnode.make_node('doh')
                 conf.start_msg("Copying " + dohnode.relpath() + " to " + dohdstnode.relpath())
-                if os.path.exists(dohdstnode.relpath()) :
-                    shutil.rmtree(dohdstnode.relpath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10)
+                removeLoc(dohdstnode.relpath())
                 shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
                 conf.end_msg("ok")
             #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
@@ -146,16 +151,14 @@ def configure(conf):
 #            if not os.path.exists(htdocsdojoxnode.abspath()) :
 #                htdocsdojoxnode.mkdir()
 #            shutil.copy(dojoxmobilethemechooser.abspath(),htdocsnode.make_node(dojoxmobilethemechooser.path_from(scriptsnode)).abspath())
-#            conf.end_msg( htdocsnode.find_node(dojoxmobilethemechooser.path_from(scriptsnode)).relpath())
+#            conf.end_msg(htdocsnode.find_node(dojoxmobilethemechooser.path_from(scriptsnode)).relpath())
         
             conf.start_msg("Extracting Dojox Mobile Themes ")
             dmblthemes_build = scriptsnode.find_node("dojox/mobile/themes")
             if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")
             htdocsDojoxNode = htdocsnode.make_node("dojox")
             dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
-            if os.path.exists(htdocsDojoxNode.abspath()) : #remove existing dojox dir
-                shutil.rmtree(htdocsDojoxNode.abspath(), 1)
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 5)
+            removeLoc(htdocsDojoxNode.abspath()) #remove existing dojox dir
             dmbltnode.mkdir()
             for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
                 thdir = dmblthemes_build.find_dir(ftname)
@@ -172,9 +175,7 @@ def configure(conf):
                             thimg = thdir.find_dir("images")
                             if thimg is not None :
                                 thimagesnode = thnode.make_node("images")
-                                if os.path.exists(thimagesnode.abspath()) : #remove existing images dir
-                                    shutil.rmtree(thimagesnode.abspath())
-                                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                                removeLoc(thimagesnode.abspath()) #remove existing images dir
                                 shutil.copytree(thimg.abspath(), thimagesnode.abspath())
                   
                             #ipad specific from iphone theme
@@ -199,12 +200,12 @@ def configure(conf):
         #nodeJS detection
         def detect_nodeJS() :
             conf.start_msg("=> NodeJS bin/ should be in your PATH")
-            ant_detect = subprocess.Popen("node -v",
+            nJS_detect = subprocess.Popen("node -v",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=True,)
-            out,err = ant_detect.communicate()
-            if ant_detect.returncode == 0 :
+            out,err = nJS_detect.communicate()
+            if nJS_detect.returncode == 0 :
                 conf.to_log(out)
                 conf.to_log(err)
                 conf.end_msg("ok","GREEN")
@@ -242,15 +243,14 @@ def configure(conf):
         assetswww_dir = android_proj_node.find_dir('assets').find_dir('www')
         if assetswww_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
         #cleaning basic cordova project for automatically added items and for old build item
-        #TODO what about ? '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico'
+        #TODO what about '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico' ?
         #TODO why not delete everything except cordova.js (and maybe master.css) ?
         #TODO what if we need cordova.js in the project use ??
         for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
           delnode = assetswww_dir.find_node(todel)
           if delnode is not None :
-              if os.path.isdir(delnode.relpath()) : 
-                  shutil.rmtree(delnode.relpath(),True)
-                  if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+              if os.path.isdir(delnode.relpath()) :
+                  removeLoc(delnode.relpath())
               elif os.path.isfile(delnode.relpath()) :
                   os.remove(delnode.relpath())
     
@@ -294,6 +294,20 @@ def build(bld):
     else :
         #print depends_dir.abspath()
         bld.recurse('depends')
+
+    # Remove a location
+    # In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
+    def removeLoc(location):
+        while 1:
+            try:
+                if os.path.exists(location):
+                    shutil.rmtree(location)
+                os.makedirs(location)
+                break
+            except:
+                pass
+
+        shutil.rmtree(location)
 
     #define a portable copy task
     def cp_task(task):
@@ -348,9 +362,7 @@ def build(bld):
 
         if bld.env.ENGINE == "dojo" :
             assetswwwscriptsdojo_dir = assetswwwscripts_dir.make_node("dojo")
-            if os.path.exists(assetswwwscriptsdojo_dir.abspath()) :
-                shutil.rmtree(assetswwwscriptsdojo_dir.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+            removeLoc(assetswwwscriptsdojo_dir.abspath())
             assetswwwscriptsdojo_dir.mkdir()
     #end PLATFORM android
     elif bld.env.PLATFORM == 'chrome' :
@@ -427,9 +439,7 @@ def build(bld):
             dojoresnode = dojobuildnode.find_dir("resources")
             if dojoresnode is not None :
                 scriptsresnode = bldscriptsnode.make_node("dojo").make_node("resources")
-                if os.path.exists(scriptsresnode.abspath()) :
-                    shutil.rmtree(scriptsresnode.abspath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 5)
+                removeLoc(scriptsresnode.abspath())
                 shutil.copytree(dojoresnode.abspath(), scriptsresnode.abspath())
                 if bld.env.PLATFORM == 'android' :
                     shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
@@ -463,29 +473,20 @@ def build(bld):
                     #print _thdir.abspath()
                     if _thdir is not None :
                         bldCssThNode = bldCssNode.make_node(tname)
-                        #print bldCssThNode.abspath()
-                        if os.path.exists(bldCssThNode.abspath()) :
-                            shutil.rmtree(bldCssThNode.abspath())
-                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10)
-                        #print _thdir.find_node(tname + ".css").abspath()
-                        #print bldCssThNode.abspath()
+                        removeLoc(bldCssThNode.abspath())
                         bldCssThNode.mkdir()
                         shutil.copy(_thdir.find_node(tname + ".css").abspath(), bldCssThNode.abspath())
 
                         _thimg = _thdir.find_dir("images")
                         if _thimg is not None :
                             bldCssThImgsNode = bldCssThNode.make_node("images")
-                            if os.path.exists(bldCssThImgsNode.abspath()) :
-                                shutil.rmtree(bldCssThImgsNode.abspath())
-                                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                            removeLoc(bldCssThImgsNode.abspath())
                             shutil.copytree(_thimg.abspath(), bldCssThImgsNode.abspath())
 
                         if bld.env.PLATFORM == 'android' :
                             #print assetswww_dir.make_node("css").make_node(tname).abspath()
                             assetswwwCssThemeNode = assetswww_dir.make_node("css").make_node(tname)
-                            if os.path.exists(assetswwwCssThemeNode.abspath()) :
-                                shutil.rmtree(assetswwwCssThemeNode.abspath())
-                                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
+                            removeLoc(assetswwwCssThemeNode.abspath())
                             shutil.copytree(bldCssThNode.abspath(), assetswwwCssThemeNode.abspath())
 
             if bld.env.PLATFORM == 'android' :
@@ -512,9 +513,7 @@ def build(bld):
                 buildApp(profnode, chroEnvNode)
         else:
             if appIsBuilt:
-                #print "Removing App build folder"
-                shutil.rmtree(appBuild_dir.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 150) #folder w numerous files, needs a lot of time to be properly removed
+                removeLoc(appBuild_dir.abspath())
             buildApp(profnode, chroEnvNode)
         
         #static files
@@ -635,9 +634,7 @@ def build(bld):
             else :
                 if os.path.isdir(cpnode.abspath()) :
                     bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
-                    if os.path.exists(bld_cpnode.abspath()) :
-                        shutil.rmtree(bld_cpnode.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10) #sleep to allow deletion on Windows
+                    removeLoc(bld_cpnode.abspath())
                     res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
                 else :
                     srccp = cpnode.get_src().abspath()
@@ -669,8 +666,8 @@ def doc(bld):
             if out is not None or err is not None: bld.fatal("Command Output: \n" + out + "Error : \n" + err)
         return gendoc_proc.returncode
         bld(rule=docgen_task
-            #source= #TODO : file to generate doc from
-            #target= #TODO : where to put generated doc
+            #source=  #TODO: file to generate doc from
+            #target=  #TODO: where to put generated doc
         )
 
     
@@ -726,7 +723,7 @@ def run(ctx): # this is a buildcontext
     startnode = bldnode.find_node(APPNAME + ".html")
     #TODO : better than that, handle dependency between here and build
     if startnode is None : ctx.fatal(bldnode.bldpath() + os.sep + APPNAME + ".html not found. Please run ./waf build again.")
-    else : ctx(rule=firefox_task,
+    else : ctx(rule=firefox_task, #TODO: better, use default OS browser
         source=startnode)
     
     #TODO : check how to finish waf before running stuff here ( run is not a test, just a help function to run with proper parameters )
