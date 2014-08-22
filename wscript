@@ -6,18 +6,19 @@
 #   ./waf dist_[chrome]
 
 
-import sys;
-import os;
-import stat;
-import shutil;
-import urllib;
-import zipfile;
-import shlex,subprocess;
-import multiprocessing;
-import json;
-from string import Template;
-import platform;
-import time;
+import sys
+import os
+import stat
+import shutil
+import urllib
+import zipfile
+import shlex
+import subprocess
+import multiprocessing
+import json
+from string import Template
+import platform
+import time
 
 APPNAME = 'webRoot' #set Your Project Name Here
 VERSION = '1' #set Your Project Version Here (only used internally by waf on build)
@@ -51,7 +52,7 @@ def configure(conf):
     conf.check_waf_version(mini='1.6.3')
 
     #running configure in depends
-    depends_dir= conf.path.find_dir('depends')
+    depends_dir = conf.path.find_dir('depends')
     if depends_dir is not None : conf.recurse('depends')
 
     # Finding the htdocs folder, the root
@@ -70,7 +71,7 @@ def configure(conf):
         #else: print depend + " path " + dependNode.abspath()
 
         if os.path.isdir(dependNode.abspath()) : #FOLDER HANDLING
-            conf.start_msg("Retrieving " + depend )
+            conf.start_msg("Retrieving " + depend)
             files = os.listdir(dependNode.abspath())
             for file in files:
                 src_file = os.path.join(dependNode.abspath(), file)
@@ -79,11 +80,11 @@ def configure(conf):
                     shutil.rmtree(dst_file)
                     if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
                 shutil.move(src_file, dst_file)
-            conf.end_msg(scriptsnode.relpath() + " : [" + ', '.join(files)+ "]")
+            conf.end_msg(scriptsnode.relpath() + " : [" + ', '.join(files) + "]")
         else : #FILE HANDLING
-            conf.start_msg("Retrieving " + depend )
+            conf.start_msg("Retrieving " + depend)
             shutil.copy(dependNode.abspath(),scriptsnode.abspath())
-            conf.end_msg( scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
+            conf.end_msg(scriptsnode.find_node(os.path.basename(dependNode.abspath())).relpath())
 
     #handling ENGINE
     if conf.env.ENGINE == "dojo":
@@ -91,10 +92,10 @@ def configure(conf):
             #extracting dijit themes
             dijitthemes = scriptsnode.find_node("dijit/themes")
             if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
-            conf.start_msg( "Extracting Dijit Themes ")
+            conf.start_msg("Extracting Dijit Themes ")
             cssNode = htdocsnode.find_node("css")
             #copying dijit.css
-            shutil.copy(dijitthemes.find_node("dijit.css").get_src().abspath(), cssNode.abspath() )
+            shutil.copy(dijitthemes.find_node("dijit.css").get_src().abspath(), cssNode.abspath())
             #copying dijit themes (not built)
             for tname in DIJIT_THEMES :
                 thdir = dijitthemes.find_dir(tname)
@@ -102,35 +103,35 @@ def configure(conf):
                     cssThDir = cssNode.make_node(tname)
                     if os.path.exists(cssThDir.abspath()) :
                         shutil.rmtree(cssThDir.abspath())
-                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*4)
-                    shutil.copytree (thdir.abspath(), cssThDir.abspath() )
-            conf.end_msg( cssNode.relpath() )
+                        if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 4)
+                    shutil.copytree(thdir.abspath(), cssThDir.abspath())
+            conf.end_msg(cssNode.relpath())
             
             #copying dijit/icons into htdocs/icons
             dijiticons = scriptsnode.find_node("dijit/icons")
             if dijiticons is None : conf.fatal("dijit/icons for dijit icons was not found in build directory. Cannot continue.")
-            conf.start_msg( "Extracting Dijit Icons ")
+            conf.start_msg("Extracting Dijit Icons ")
             htdocsIconsNode = htdocsnode.make_node("icons") 
             if os.path.exists(htdocsIconsNode.abspath()) :
                 shutil.rmtree(htdocsIconsNode.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*60)
-            shutil.copytree (dijiticons.abspath(), htdocsIconsNode.abspath() )
-            conf.end_msg( htdocsIconsNode.relpath() )
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 60)
+            shutil.copytree(dijiticons.abspath(), htdocsIconsNode.abspath())
+            conf.end_msg(htdocsIconsNode.relpath())
 
         # Copying doh for testing purposes into our tests directory
         if scriptsnode.find_dir('app') is not None : #todo hard coded name, fixed it
-            testsnode =  scriptsnode.find_dir('app').find_dir('tests')
+            testsnode = scriptsnode.find_dir('app').find_dir('tests')
             if testsnode is not None :
                 dohnode = scriptsnode.find_dir('util/doh')
                 if dohnode is None : conf.fatal("util/doh subfolder was not found in dojo directory. Cannot continue.")
   
                 dohdstnode = testsnode.make_node('doh')
-                conf.start_msg( "Copying " + dohnode.relpath() + " to " + dohdstnode.relpath() )
+                conf.start_msg("Copying " + dohnode.relpath() + " to " + dohdstnode.relpath())
                 if os.path.exists(dohdstnode.relpath()) :
                     shutil.rmtree(dohdstnode.relpath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10)
                 shutil.copytree(dohnode.relpath(), dohdstnode.relpath())
-                conf.end_msg( "ok" )
+                conf.end_msg("ok")
             #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
 
         if conf.env.PLATFORM == 'android':
@@ -147,14 +148,14 @@ def configure(conf):
 #            shutil.copy(dojoxmobilethemechooser.abspath(),htdocsnode.make_node(dojoxmobilethemechooser.path_from(scriptsnode)).abspath())
 #            conf.end_msg( htdocsnode.find_node(dojoxmobilethemechooser.path_from(scriptsnode)).relpath())
         
-            conf.start_msg( "Extracting Dojox Mobile Themes ")
+            conf.start_msg("Extracting Dojox Mobile Themes ")
             dmblthemes_build = scriptsnode.find_node("dojox/mobile/themes")
             if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")
-            htdocsDojoxNode = htdocsnode.make_node("dojox");
+            htdocsDojoxNode = htdocsnode.make_node("dojox")
             dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
             if os.path.exists(htdocsDojoxNode.abspath()) : #remove existing dojox dir
                 shutil.rmtree(htdocsDojoxNode.abspath(), 1)
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 5)
             dmbltnode.mkdir()
             for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
                 thdir = dmblthemes_build.find_dir(ftname)
@@ -165,7 +166,7 @@ def configure(conf):
                         thnode.mkdir()
                         if thnode is not None :
                             #copy the css
-                            shutil.copy( thcss.abspath(), thnode.abspath())
+                            shutil.copy(thcss.abspath(), thnode.abspath())
                 
                             #copy the images
                             thimg = thdir.find_dir("images")
@@ -174,14 +175,14 @@ def configure(conf):
                                 if os.path.exists(thimagesnode.abspath()) : #remove existing images dir
                                     shutil.rmtree(thimagesnode.abspath())
                                     if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                                shutil.copytree (thimg.abspath(), thimagesnode.abspath() )
+                                shutil.copytree(thimg.abspath(), thimagesnode.abspath())
                   
                             #ipad specific from iphone theme
                             ipadcss = thdir.find_node("ipad.css")
                             if ipadcss is not None :
-                                shutil.copy( ipadcss.abspath(), thnode.abspath())
+                                shutil.copy(ipadcss.abspath(), thnode.abspath())
           
-            conf.end_msg( "ok" )
+            conf.end_msg("ok")
 
     else: # no need of dojo
         pass
@@ -198,43 +199,39 @@ def configure(conf):
         #nodeJS detection
         def detect_nodeJS() :
             conf.start_msg("=> NodeJS bin/ should be in your PATH")
-            ant_detect = subprocess.Popen(
-                "node -v",
+            ant_detect = subprocess.Popen("node -v",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                shell=True,
-            )
+                shell=True,)
             out,err = ant_detect.communicate()
             if ant_detect.returncode == 0 :
                 conf.to_log(out)
                 conf.to_log(err)
                 conf.end_msg("ok","GREEN")
-                return True;
+                return True
             else :
                 conf.end_msg("failed","RED")
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
         
         android_pub_node = conf.path.find_node("publish").find_node("android")
         if android_pub_node is None : conf.fatal("Cannot find publish/android path")
-        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
+        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         if android_proj_node is None :
             conf.end_msg("failed","RED")
             #detecting nodeJS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
             if detect_nodeJS():
                 conf.start_msg("Building Cordova Project")
-                cordova_create_proc = subprocess.Popen(
-                    "\"" + cordova_create_node.abspath() + "\" \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + " \"" + ANDROID_PROJECT + "\"",
+                cordova_create_proc = subprocess.Popen("\"" + cordova_create_node.abspath() + "\" \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + " \"" + ANDROID_PROJECT + "\"",
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    shell=True
-                )
+                    shell=True)
                 out,err = cordova_create_proc.communicate()
                 if cordova_create_proc.returncode == 0 :
                     conf.to_log(out)
                     conf.to_log(err)
-                    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
-                    if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found");
-                    conf.end_msg( android_proj_node.relpath(),"GREEN")
+                    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+                    if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
+                    conf.end_msg(android_proj_node.relpath(),"GREEN")
                 else :
                     conf.end_msg("failed","RED")
                     conf.fatal("Command Output : \n" + out + "Error :\n" + err)
@@ -266,14 +263,14 @@ def configure(conf):
 
 
     #running configure in tools
-    depnode= conf.path.find_dir('tools')
+    depnode = conf.path.find_dir('tools')
     if depnode is not None : conf.recurse('tools')
 
     #configuring env for this platform ( one per build variant )
     conf.setenv('debug')
-    conf.env.ENGINE=conf.options.engine
+    conf.env.ENGINE = conf.options.engine
     conf.setenv('release')
-    conf.env.ENGINE=conf.options.engine
+    conf.env.ENGINE = conf.options.engine
     #configuring env for this platform ( one per build variant )
     # printing all variables setup (for debug)
     #print(conf.env)
@@ -282,14 +279,14 @@ def configure(conf):
 def build(bld):
 
     #save build directory node for build
-    bldnode=bld.path.get_bld()
+    bldnode = bld.path.get_bld()
     bldscriptsnode = bldnode.make_node('scripts')
     bldscriptsnode.mkdir()
     chronode = None
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
-        bld.fatal("The build type " + bld.options.bT + " is unknown. Please use one of those [" + BUILDTYPES +"]")
+        bld.fatal("The build type " + bld.options.bT + " is unknown. Please use one of those [" + BUILDTYPES + "]")
 
     #running build in depends
     depends_dir = bld.path.get_src().find_dir('depends')
@@ -319,7 +316,7 @@ def build(bld):
         src = task.inputs[0].abspath()
         tg = task.outputs[0].abspath()
         #TODO
-        adv_opti = False; # still buggy
+        adv_opti = False; #still buggy
         #(adv_opti is True ? adv = " --compilation_level ADVANCED_OPTIMIZATIONS " : adv = "")
         adv = ""
         if adv_opti is True:
@@ -329,7 +326,7 @@ def build(bld):
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out,err = cbuild_proc.communicate()
 
-        if ( cbuild_proc.returncode > 0 ) :
+        if (cbuild_proc.returncode > 0) :
             bld.fatal("Closure Compiler failed. Error : \n" + err)
         else :
             if out is not None and out.strip() != "" :
@@ -368,12 +365,10 @@ def build(bld):
             print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
-            app_build_proc = subprocess.Popen(
-                shlex.split( buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release" ),
+            app_build_proc = subprocess.Popen(shlex.split(buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release"),
                 cwd= bsnode.abspath(),
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+                stderr=subprocess.PIPE)
             out,err = app_build_proc.communicate()
             if app_build_proc.returncode == 0 :
                 if out is not None and out.strip() != "" :
@@ -388,19 +383,15 @@ def build(bld):
                     if chroEnvNode is not None :
                         chroEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
                         print "Building and adding platform env " + chroEnvBuildNode.relpath()
-                        bld(
-                            rule = cbuild_task,
+                        bld(rule = cbuild_task,
                             source = chroEnvNode.get_src(),
                             target = chroEnvBuildNode,
-                            name = "buildChromeEnv_task"
-                        )
-                        bld(
-                            rule = appendToFile_task,
+                            name = "buildChromeEnv_task")
+                        bld(rule = appendToFile_task,
                             source = chroEnvBuildNode,
                             target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
                             after = "buildChromeEnv_task",
-                            before = "copyBuild_task"
-                        )
+                            before = "copyBuild_task")
 
             else :
                 bld.end_msg("failed","RED")
@@ -420,20 +411,16 @@ def build(bld):
                 jsBuildFiles.extend(jsBuildFilesExt)
             for jsBuildFile in appBuild_dir.get_src().ant_glob(jsBuildFiles): #warning in case a file defined in jsBuildFiles doesnt exists, it will simply be ignore and no message will appear
                 print "Extracting " + jsBuildFile.get_src().relpath()
-                bld(
-                    rule = cp_task,
+                bld(rule = cp_task,
                     source = jsBuildFile.get_src(),
                     target = bldnode.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)),
-                    after = "buildApp"
-                )# copy them to the build directory
+                    after = "buildApp") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
-                    bld(
-                        rule = cp_task,
+                    bld(rule = cp_task,
                         source = jsBuildFile.get_src(),
                         target = assetswww_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
                         after = "buildApp",
-                        before = "androbuild_task"
-                    )
+                        before = "androbuild_task")
 
             #extracting dojo resources
             print "Extracting Dojo resources"
@@ -442,8 +429,8 @@ def build(bld):
                 scriptsresnode = bldscriptsnode.make_node("dojo").make_node("resources")
                 if os.path.exists(scriptsresnode.abspath()) :
                     shutil.rmtree(scriptsresnode.abspath())
-                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*5)
-                shutil.copytree (dojoresnode.abspath(), scriptsresnode.abspath() )
+                    if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 5)
+                shutil.copytree(dojoresnode.abspath(), scriptsresnode.abspath())
                 if bld.env.PLATFORM == 'android' :
                     shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
         
@@ -461,7 +448,7 @@ def build(bld):
                 #copying localization resources from the build ( excluding default copied file by dojo build process )
                 for fname in dojonls.ant_glob("dojo_*") :
                     if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
-                        shutil.copy( fname.abspath(), bldscriptsdnlsnode.abspath())
+                        shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
                             shutil.copytree(bldscriptsdnlsnode.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
 
@@ -479,11 +466,11 @@ def build(bld):
                         #print bldCssThNode.abspath()
                         if os.path.exists(bldCssThNode.abspath()) :
                             shutil.rmtree(bldCssThNode.abspath())
-                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*10)
+                            if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10)
                         #print _thdir.find_node(tname + ".css").abspath()
                         #print bldCssThNode.abspath()
                         bldCssThNode.mkdir()
-                        shutil.copy(_thdir.find_node(tname + ".css").abspath(), bldCssThNode.abspath() )
+                        shutil.copy(_thdir.find_node(tname + ".css").abspath(), bldCssThNode.abspath())
 
                         _thimg = _thdir.find_dir("images")
                         if _thimg is not None :
@@ -491,7 +478,7 @@ def build(bld):
                             if os.path.exists(bldCssThImgsNode.abspath()) :
                                 shutil.rmtree(bldCssThImgsNode.abspath())
                                 if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION)
-                            shutil.copytree (_thimg.abspath(), bldCssThImgsNode.abspath() )
+                            shutil.copytree(_thimg.abspath(), bldCssThImgsNode.abspath())
 
                         if bld.env.PLATFORM == 'android' :
                             #print assetswww_dir.make_node("css").make_node(tname).abspath()
@@ -527,7 +514,7 @@ def build(bld):
             if appIsBuilt:
                 #print "Removing App build folder"
                 shutil.rmtree(appBuild_dir.abspath())
-                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION*150) #folder w numerous files, needs a lot of time to be properly removed
+                if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 150) #folder w numerous files, needs a lot of time to be properly removed
             buildApp(profnode, chroEnvNode)
         
         #static files
@@ -539,18 +526,14 @@ def build(bld):
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico']
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
             if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
-                bld(
-                    rule=cp_task,
+                bld(rule=cp_task,
                     source=static.get_src(),
-                    target=bldnode.make_node(static.path_from(htdocs_dir))
-                )# copy them to the build directory
+                    target=bldnode.make_node(static.path_from(htdocs_dir))) #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     #copying
-                    bld(
-                        rule=cp_task,
+                    bld(rule=cp_task,
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
-                        target=assetswww_dir.make_node(static.path_from(htdocs_dir))
-                    )
+                        target=assetswww_dir.make_node(static.path_from(htdocs_dir)))
 
         #Compile app src files
         jsFiles = ['*.js']
@@ -558,17 +541,13 @@ def build(bld):
             jsFiles.extend(['nls/**/*.js'])
         for js in scripts_dir.get_src().ant_glob(jsFiles):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
-            bld(
-                rule = cbuild_task,
+            bld(rule = cbuild_task,
                 source = js.get_src(),
-                target = bldscriptsnode.make_node(js.path_from(scripts_dir))
-            )
+                target = bldscriptsnode.make_node(js.path_from(scripts_dir)))
             if bld.env.PLATFORM == 'android' :
-                bld(
-                    rule = cbuild_task,
+                bld(rule = cbuild_task,
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
-                    target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir))
-                )
+                    target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir)))
 
         #copy build task call
         cpBuild()
@@ -577,7 +556,7 @@ def build(bld):
   
     if bld.env.PLATFORM == 'android' : 
         android_pub_node = bld.path.find_node("publish").find_node("android")
-        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
+        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         # last tuning to make it all work
         #TODO
         # building android version
@@ -595,21 +574,20 @@ def build(bld):
           #finding relevant build script
           buildandroid_node = None
           if os.name == 'posix' and platform.system() == 'Linux':
-              buildandroid_node=android_proj_node.find_node("cordova").find_node("build")
+              buildandroid_node = android_proj_node.find_node("cordova").find_node("build")
               if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
               os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
           elif os.name == 'nt' and platform.system() == 'Windows' :
-              buildandroid_node=android_proj_node.find_node("cordova").find_node("build.bat")
+              buildandroid_node = android_proj_node.find_node("cordova").find_node("build.bat")
               if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
             
-          androbuild_proc = subprocess.Popen(
-            buildandroid_node.relpath() + dbgopt ,
+          androbuild_proc = subprocess.Popen(buildandroid_node.relpath() + dbgopt ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True)
           out,err = androbuild_proc.communicate()
 
-          if ( androbuild_proc.returncode != 0 ) :
+          if (androbuild_proc.returncode != 0) :
             bld.fatal("Android Build failed. Error : \n" + err)
           else :
             if out is not None and out.strip() != "" :
@@ -619,12 +597,10 @@ def build(bld):
           return androbuild_proc.returncode
 
         #defining the build task
-        bld(
-            rule = androbuild_task,
+        bld(rule = androbuild_task,
             source = android_proj_node.make_node("build.xml"),
-            target = android_proj_node.make_node(os.path.join("ant-build",ANDROID_PROJECT + "-debug.apk" )), #param to check if build is at the good location
-            always = True
-        )
+            target = android_proj_node.make_node(os.path.join("ant-build",ANDROID_PROJECT + "-debug.apk")), #param to check if build is at the good location
+            always = True)
 
     elif bld.env.PLATFORM == 'chrome' :
         #manifest version change task
@@ -636,7 +612,7 @@ def build(bld):
             out,err = git_count_proc.communicate()
             if git_count_proc.returncode != 0 : bld.fatal("Cannot determine current git count to set version.")
             else :
-                mnfst_str_tmpl = Template(src.read()) # template to do $var based substitution , not to get mixed with json syntax
+                mnfst_str_tmpl = Template(src.read()) #template to do $var based substitution, not to get mixed with json syntax
                 mnfst_str = mnfst_str_tmpl.substitute(bzr_rev=out.strip())
             #TODO : handl errors here
             mnfst_bld_file = open(tg,'w')
@@ -648,11 +624,9 @@ def build(bld):
         mnfstnode = chronode.find_node("manifest.json")
         if mnfstnode is None : bld.fatal("manifest.json not found")
         else :
-            bld(
-                rule=mnfst_version_change,
+            bld(rule=mnfst_version_change,
                 source = mnfstnode,
-                target = bldnode.make_node(mnfstnode.path_from(chronode))
-            )
+                target = bldnode.make_node(mnfstnode.path_from(chronode)))
         
         #copying chrome publish files
         for cpfiles in ['_locales','ico16.png','ico128.png'] :
@@ -666,8 +640,8 @@ def build(bld):
                         if (platform.system() == 'Windows'): time.sleep(WINDOWS_SLEEP_DURATION * 10) #sleep to allow deletion on Windows
                     res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
                 else :
-                    srccp = cpnode.get_src().abspath();
-                    tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath();
+                    srccp = cpnode.get_src().abspath()
+                    tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath()
                     if not os.path.exists(os.path.dirname(tgtcp)) :
                         os.makedirs(os.path.dirname(tgtcp))
                     res = shutil.copy(srccp,tgtcp)
@@ -691,12 +665,12 @@ def doc(bld):
         if docnode is None : bld.fatal("Cannot find doc/ subdirectory. doc generation aborted")
         gendoc_proc = subprocess.Popen(shlex.split(cmd), cwd=docnode.abspath() ,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out,err = gendoc_proc.communicate()
-        if ( gendoc_proc.returncode != 0) :
+        if (gendoc_proc.returncode != 0) :
             if out is not None or err is not None: bld.fatal("Command Output: \n" + out + "Error : \n" + err)
         return gendoc_proc.returncode
-        bld(  rule=docgen_task
-            #source=  #TODO : file to generate doc from
-            #target=  # TODO : where to put generated doc
+        bld(rule=docgen_task
+            #source= #TODO : file to generate doc from
+            #target= #TODO : where to put generated doc
         )
 
     
@@ -708,24 +682,23 @@ def run(ctx): # this is a buildcontext
 
   if ctx.env.PLATFORM == 'android' : 
     android_pub_node = ctx.path.find_node("publish").find_node("android")
-    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT);
+    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         
     if os.name == 'posix' and platform.system() == 'Linux':
-        runandroid_node=android_proj_node.find_node("cordova").find_node("run")
+        runandroid_node = android_proj_node.find_node("cordova").find_node("run")
         if runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
         os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
     elif os.name == 'nt' and platform.system() == 'Windows' :
-        runandroid_node=android_proj_node.find_node("cordova").find_node("run.bat")
+        runandroid_node = android_proj_node.find_node("cordova").find_node("run.bat")
         if  runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
             
-    androrun_proc = subprocess.Popen(
-      runandroid_node.relpath(),
+    androrun_proc = subprocess.Popen(runandroid_node.relpath(),
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE,
       shell=True)
     out,err = androrun_proc.communicate()
 
-    if ( androrun_proc.returncode != 0 ) :
+    if (androrun_proc.returncode != 0) :
       ctx.fatal("Android Run failed. Error : \n" + err)
     else :
       if out is not None and out.strip() != "" :
@@ -746,16 +719,15 @@ def run(ctx): # this is a buildcontext
       ff_proc = subprocess.Popen(cmd,cwd=wd,shell=True)
       ff_proc.wait()
       #ctx.end_msg( "ok" if ff_proc.returncode == 0 else "failed" )
-      if ( ff_proc.returncode != 0) :
+      if (ff_proc.returncode != 0) :
         ctx.fatal("Error : the execution of the program in firefox failed")
       return ff_proc.returncode
 
-    startnode = bldnode.find_node(APPNAME+".html")
+    startnode = bldnode.find_node(APPNAME + ".html")
     #TODO : better than that, handle dependency between here and build
-    if startnode is None : ctx.fatal(bldnode.bldpath() + os.sep + APPNAME+".html not found. Please run ./waf build again.")
-    else : ctx( rule=firefox_task,
-        source=startnode
-      )
+    if startnode is None : ctx.fatal(bldnode.bldpath() + os.sep + APPNAME + ".html not found. Please run ./waf build again.")
+    else : ctx(rule=firefox_task,
+        source=startnode)
     
     #TODO : check how to finish waf before running stuff here ( run is not a test, just a help function to run with proper parameters )
 
@@ -770,16 +742,15 @@ def run(ctx): # this is a buildcontext
       chr_proc = subprocess.Popen(cmd,cwd=wd,shell=True)
       chr_proc.wait()
       #ctx.end_msg( "ok" if chr_proc.returncode == 0 else "failed" )
-      if ( chr_proc.returncode != 0) :
+      if (chr_proc.returncode != 0) :
         ctx.fatal("Error : the execution of the program in chrome failed")
       return chr_proc.returncode
 
-    startnode = bldnode.find_node(APPNAME+".html")
+    startnode = bldnode.find_node(APPNAME + ".html")
     #TODO : better than that, handle dependency between here and build
-    if startnode is None : ctx.fatal(bldnode.bld_path() + os.sep + APPNAME+".html not found. Please run ./waf build again.")
-    else : ctx( rule = chrome_task,
-        source = startnode
-      )
+    if startnode is None : ctx.fatal(bldnode.bld_path() + os.sep + APPNAME + ".html not found. Please run ./waf build again.")
+    else : ctx(rule = chrome_task,
+        source = startnode)
 
     #TODO : check how to finish waf before running stuff here ( run is not a test, just a help function to run with proper parameters )
   
@@ -792,23 +763,23 @@ def run(ctx): # this is a buildcontext
 def dist(ctx):
   """package the build result to be delivered to the platform ( local )"""
   ctx.base_name = ctx.get_base_name() + "_local"
-  ctx.algo      = 'zip'
-  ctx.excl      = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js **/*.log'
-  ctx.files     = ctx.path.ant_glob('wbuild/')
+  ctx.algo = 'zip'
+  ctx.excl = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js **/*.log'
+  ctx.files = ctx.path.ant_glob('wbuild/')
 
 def dist_chrome(ctx):
   """package the build result to be delivered to the platform (chrome_store)"""
   ctx.base_name = ctx.get_base_name() + "_chrome"
-  ctx.algo      = 'zip'
-  ctx.excl      = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js'
-  ctx.files     = ctx.path.ant_glob('wbuild/,publish/chrome_store/')
+  ctx.algo = 'zip'
+  ctx.excl = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js'
+  ctx.files = ctx.path.ant_glob('wbuild/,publish/chrome_store/')
 
 def dist_owa(ctx):
   """package the build result to be delivered to the platform (owa)"""
   ctx.base_name = ctx.get_base_name() + "_owa"
-  ctx.algo      = 'zip'
-  ctx.excl      = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js'
-  ctx.files     = ctx.path.ant_glob('wbuild/,publish/owa_store/')
+  ctx.algo = 'zip'
+  ctx.excl = ' **/.waf-1* **/*~ **/*.pyc **/*.swp **/.lock-w* **/.bzr **/.svn **/*.waf* **/*.uncompressed.js'
+  ctx.files = ctx.path.ant_glob('wbuild/,publish/owa_store/')
 
   #https://code.google.com/p/waf/wiki/WafDist
 
