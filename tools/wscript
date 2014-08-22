@@ -7,52 +7,48 @@
 #   > ./waf configure --engine=[dojo|elixir]
 #
 
-import sys;
-import os;
-import shutil;
-import urllib;
-import zipfile;
-import shlex,subprocess;
-import platform;
+import sys
+import os
+import shutil
+import urllib
+import zipfile
+import shlex
+import subprocess
+import platform
 
 COMPILER_PATH = "closure/compiler.jar"
 
 def options(opt):
-	""" Defines which option can be used for this project """
-	#gropt = opt.get_option_group('configure options')
-	#gropt.add_option('-e', '--engine', action='store', default='dojo', help='engine to configure the build for [default: \'dojo\']', dest='engine')
-	#TODO : add option for the compiler
+    """ Defines which option can be used for this project """
+    #gropt = opt.get_option_group('configure options')
+    #gropt.add_option('-e', '--engine', action='store', default='dojo', help='engine to configure the build for [default: \'dojo\']', dest='engine')
+    #TODO : add option for the compiler
 
 def configure(conf):
-	conf.check_waf_version(mini='1.6.3')
+    conf.check_waf_version(mini='1.6.3')
 
-	#check where we can find the closure compiler
-	conf.start_msg("Checking for Closure Compiler")
-	compilernode = conf.path.find_node(COMPILER_PATH)
-	if compilernode is None: conf.end_msg("failed", color="RED") # TODO : download and install automatically ?
-	else : 
-		conf.end_msg("ok", color="GREEN")
-		#checking the version of the compiler to make sure
-		compiler_version_proc = subprocess.Popen( shlex.split("java -jar \"" + compilernode.abspath() + "\" --version"),
-								stdout=subprocess.PIPE,stderr=subprocess.PIPE, stdin=subprocess.PIPE )
-		out,err = compiler_version_proc.communicate()
-		if ( compiler_version_proc.returncode != 0 ) :
-			conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-		else : 
-			print err
-	
-	#post condition	
-	if compilernode is None: conf.fatal("The Closure Compiler was not detected.")
-	else :
-		conf.env.COMPILER_PATH = compilernode.abspath()
-
-		
-	
-
-
-
-
-
-
-
-
+    #check where we can find the closure compiler
+    conf.start_msg("Checking for Closure Compiler")
+    compilernode = conf.path.find_node(COMPILER_PATH)
+    if compilernode is None: conf.end_msg("failed", color="RED") # TODO : download and install automatically ?
+    else : 
+        conf.end_msg("ok", color="GREEN")
+        #checking the version of the compiler to make sure ##### BE SURE THAT JAVA IS AVAILABLE or u'll get "can't find the file specified" error
+        compiler_version_proc = subprocess.Popen(shlex.split("java -jar \"" + compilernode.abspath() + "\" --version"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            shell=True)
+        out,err = compiler_version_proc.communicate()
+        if compiler_version_proc.returncode > 0 :
+            conf.to_log(out)
+            conf.to_log(err)
+            conf.end_msg("ok","GREEN")
+        else :
+            conf.end_msg("failed","RED")
+            conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+    
+    #post condition
+    if compilernode is None: conf.fatal("The Closure Compiler was not detected.")
+    else :
+        conf.env.COMPILER_PATH = compilernode.abspath()

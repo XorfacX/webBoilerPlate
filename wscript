@@ -329,7 +329,7 @@ def build(bld):
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out,err = cbuild_proc.communicate()
 
-        if ( cbuild_proc.returncode != 0 ) :
+        if ( cbuild_proc.returncode > 0 ) :
             bld.fatal("Closure Compiler failed. Error : \n" + err)
         else :
             if out is not None and out.strip() != "" :
