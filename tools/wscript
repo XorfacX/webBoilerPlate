@@ -40,7 +40,7 @@ def configure(conf):
             stdin=subprocess.PIPE,
             shell=True)
         out,err = compiler_version_proc.communicate()
-        if compiler_version_proc.returncode > 0 :
+        if compiler_version_proc.returncode <= 0 :
             conf.to_log(out)
             conf.to_log(err)
             conf.end_msg("ok","GREEN")
