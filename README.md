@@ -1,5 +1,6 @@
 webBoilerPlate
 ===
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/XorfacX/webBoilerPlate?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 The project aim is to be the root of all web project.
 It contains the structure and scripts design to start a project with a proper configuration.
