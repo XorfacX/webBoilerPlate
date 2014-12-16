@@ -19,7 +19,7 @@ LZSTRING = 0 #enable or disable lz-string dependency
 
 
 #> http://dojotoolkit.org/
-DOJO_VERSION = "1.9.3"  #TODO UPDATE
+DOJO_VERSION = "1.10.3"  #TODO UPDATE
 DOJO_URL = "http://download.dojotoolkit.org/release-" + DOJO_VERSION + "/dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_FILENAME = "dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_UNZIP = "dojo-release-" + DOJO_VERSION + "-src"
@@ -56,6 +56,7 @@ out = 'wbuild'
 def options(opt):
     """ Defines which option can be used for this project """
     gropt = opt.get_option_group('configure options')
+    gropt.add_option("-d", "--download", action="store_true", dest="download", default=False, help="force download of depends")
     gropt.add_option('-e', '--engine', action='store', default='dojo', help='engine to configure the build for [default: \'dojo\']', dest='engine')
     gropt.add_option('-p', '--platform', action='store', default='local', help='platform to build for [default: \'local\']', dest='platform')
 
