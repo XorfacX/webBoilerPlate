@@ -16,7 +16,7 @@ HowTo
 ---
 ./waf configure --download --engine=[dojo] --platform=[android|local|chrome|owa|facebook]   
 ./waf build --partial --bT=[debug|release]   
-./waf dist_[chrome]   
+./waf dist_[chrome] (WIP)   
 ./waf distclean
 
 

@@ -1,0 +1,23 @@
+﻿{
+    "name": "__MSG_appName__",
+    "short_name": "__MSG_appShortName__",
+    "description": "__MSG_appDesc__",
+    "manifest_version": 2,
+    "offline_enabled": true,
+    "default_locale": "en",
+    "version": "$version",
+
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://www.google-analytics.com/ https://ssl.google-analytics.com https://apis.google.com https://graph.facebook.com https://ssl.1and1.fr/secure.fairydwarves.com/ https://fairydwarves.com/; object-src 'self'; frame-src https://accounts.google.com https://plusone.google.com https://facebook.com http://facebook.com http://www.facebook.com https://www.facebook.com https://platform.twitter.com http://apis.google.com https://apis.google.com https://ssl.1and1.fr/secure.fairydwarves.com/",
+
+    "app": {
+        "launch": {
+            "local_path": "index.html",
+            "container": "panel"
+        }
+    },
+
+    "icons": {
+        "16": "ico16.png",
+        "128": "ico128.png"
+    }
+}
