@@ -147,7 +147,7 @@ define([
                 console.log(res);
                 this.view.display(res);
             }));
-        },
+        }
     });  //declare
 });     //define
 

@@ -16,7 +16,7 @@ define(['dojo/_base/declare', "dojo/_base/lang"], function (declare, lang) {
             //Environment is test
             AppEnv = {
                 //TOSET: GENERAL AppEnv definition
-                LSKey: "MyAppLSkey",
+                LSKey: "MyAppLSkey"
             }; //AppEnv
 
             //TOSET: GENERAL App startup code goes here (will be mixed w platform env before execution)

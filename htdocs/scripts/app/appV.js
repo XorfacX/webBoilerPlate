@@ -46,7 +46,7 @@ define([
             domConstruct.create("div", { id: "title", innerHTML: title }, "titlePane");
             setTimeout(function () {
                 domStyle.set("title", { opacity: "0.01" });
-            }, 00);
+            }, 0);
             appView.startup();
             return this;
         },
@@ -72,7 +72,7 @@ define([
             domConstruct.create("div", { id: "logo" }, "logoPane");
             setTimeout(function () {
                 domStyle.set("logo", { opacity: "0.01" });
-            }, 00);
+            }, 0);
             appView.startup();
             return this;
         },
