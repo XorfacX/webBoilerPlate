@@ -46,7 +46,7 @@ var profile = (function () {
                     'dojo/_base/config',
 
                     //TOSET: SAME selectorEngine SET IN dojoConfig
-                    "dojo/selector/css3",
+                    "dojo/selector/acme",
 
                     //TOSET: YOUR OWN LIST OF DOJO/DOJOX/DIJIT MODULE HERE (otherwise they are added to the appC.js file)
                     "dojo/on",
