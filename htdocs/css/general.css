@@ -69,5 +69,5 @@ body {
 
 #title, #logo {
     opacity: 1;
-    -webkit-transition: opacity 1000ms ease-in 1000ms;
+    -webkit-transition: opacity 4000ms ease-in 6000ms;
 }

@@ -36,7 +36,7 @@ WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder delet
 top = '.'
 out = 'wbuild'
 jsOut = '_release' #JS build folder name
-jsBuildFiles = ['app/app.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
+jsBuildFiles = ['app/appC.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
 
 
 def options(opt):
@@ -433,7 +433,7 @@ def build(bld):
 
                         bld(rule = appendToFile_task,
                             source = platfEnvBuildNode,
-                            target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
+                            target = appBuild_dir.find_node('app/appC.js'),  #TODO 'appC.js' is hard defined, fixed it
                             after = "buildPlatfEnv_task",
                             before = "cpBuild")
 

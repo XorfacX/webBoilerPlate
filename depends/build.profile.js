@@ -45,11 +45,17 @@ var profile = (function () {
                     'dojo/_base/lang',
                     'dojo/_base/config',
 
-                    //SPECIFY THE SAME selectorEngine SET IN dojoConfig
-                    "dojo/selector/lite",
+                    //TOSET: SAME selectorEngine SET IN dojoConfig
+                    "dojo/selector/css3",
 
-                    //SPECIFY YOUR LIST OF DOJO/DOJOX/DIJIT MODULE HERE
-                    "dojo/on"
+                    //TOSET: YOUR OWN LIST OF DOJO/DOJOX/DIJIT MODULE HERE (otherwise they are added to the appC.js file)
+                    "dojo/on",
+                    "dojo/ready",
+                    "dojo/Deferred",
+                    "dojo/dom-construct",
+                    "dojo/dom-class",
+                    "dojo/dom-style",
+                    "dojox/mobile/ScrollableView"
 
                 ],
                 exclude: [
@@ -58,33 +64,33 @@ var profile = (function () {
                 customBase: true,
                 boot: true
             },
-            "app/app": { //APP LAYER
+            "app/appC": { //APP LAYER
                 include: [
-                    "app/app" //should include others app module
+                    "app/appC" //should include others app module. TOSET: modules defined though REQUIRE, others are loaded automatically.
                 ],
                 exclude: [
                     //sometimes u need to exclude duplicated dojo module from the app layer, do it here
                 ]
             }
-            //CONTINUE LIST OF LAYERS HERE (DONT FORGET TO ADD YOUR LINKED PACKAGE TOO !)
+            //TOSET: LIST OF OTHERS LAYERS HERE (DONT FORGET TO ADD YOUR LINKED PACKAGE TOO !)
         },
 
-        //SPECIFY YOUR OWN staticHasFeatures list BELOW
-        //http://dojotoolkit.org/reference-guide/1.9/build/transforms/hasFixup.html#id4
-        //http://dojotoolkit.org/documentation/tutorials/1.7/build/
-        //https://dojotoolkit.org/documentation/tutorials/1.8/device_optimized_builds/
-        //http://dojotoolkit.org/reference-guide/1.9/build/buildSystem.html
+        //TOSET: YOUR OWN staticHasFeatures list BELOW
+        //http://dojotoolkit.org/reference-guide/1.10/build/transforms/hasFixup.html#id4
+        //http://dojotoolkit.org/documentation/tutorials/1.10/build/
+        //https://dojotoolkit.org/documentation/tutorials/1.10/device_optimized_builds/
+        //http://dojotoolkit.org/reference-guide/1.10/build/buildSystem.html
 
         //Minimal stuff to setup
         staticHasFeatures: {
             'dojo-trace-api': 0, //we dont need to debug the loader
             'dojo-log-api': 0, //we dont need to debug the loader
             'dojo-publish-privates': 0, //we dont need to debug the loader
-            'dojo-sync-loader': 0, //we are full async
+            'dojo-sync-loader': 0, //we are fully async
             'dojo-test-sniff': 0, //we dont want tests
             "dojo-unit-tests": 0, //we dont want tests
-            "json-stringify": 1, //we use browser w json capabilities
-            "json-parse": 1, //we use browser w json capabilities
+            "json-stringify": 1, //we use a browser w json capabilities
+            "json-parse": 1, //we use a browser w json capabilities
             'dojo-timeout-api': 0, //we dont deal with modules that don't load
             'dojo-cdn': 0, //we dont use cdn
             'dojo-loader-eval-hint-url': 1, //loader doesnt need hints to resolve modules
