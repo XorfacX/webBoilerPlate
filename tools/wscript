@@ -32,9 +32,9 @@ def configure(conf):
     compilernode = conf.path.find_node(COMPILER_PATH)
     if compilernode is None: conf.end_msg("failed", color="RED") # TODO : download and install automatically ?
     else : 
-        conf.end_msg("ok", color="GREEN")
+        cmd = "java -jar \"" + compilernode.abspath() + "\" --version"
         #checking the version of the compiler to make sure ##### BE SURE THAT JAVA IS AVAILABLE or u'll get "can't find the file specified" error
-        compiler_version_proc = subprocess.Popen(shlex.split("java -jar \"" + compilernode.abspath() + "\" --version"),
+        compiler_version_proc = subprocess.Popen(cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
@@ -46,7 +46,7 @@ def configure(conf):
             conf.end_msg("ok","GREEN")
         else :
             conf.end_msg("failed","RED")
-            conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+            conf.fatal("Command : " + cmd + ", Output : \n" + out + "Error :\n" + err)
     
     #post condition
     if compilernode is None: conf.fatal("The Closure Compiler was not detected.")
