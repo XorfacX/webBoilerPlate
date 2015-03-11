@@ -343,8 +343,9 @@ def build(bld):
         adv = ""
         if adv_opti is True:
             adv = " --compilation_level ADVANCED_OPTIMIZATIONS "
-      
-        cbuild_proc = subprocess.Popen(shlex.split("java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT"),
+        cbuild_cmd = "java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT" 
+        print "Calling Closure Compiler : " + cbuild_cmd
+        cbuild_proc = subprocess.Popen(shlex.split(cbuild_cmd),
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out,err = cbuild_proc.communicate()
 
@@ -407,7 +408,9 @@ def build(bld):
             print "Building " + profnode.relpath()
             bsnode = scripts_dir.find_dir("util/buildscripts") # location of dojo build scripts
             buildprog = "cmd.exe /c build.bat" if (platform.system() == 'Windows') else "sh build.sh"
-            app_build_proc = subprocess.Popen(shlex.split(buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release"),
+            buildcmd = buildprog + " -p \"" + profnode.path_from(bsnode) + "\" --bin java --release"
+            print "Build command : " + buildcmd
+            app_build_proc = subprocess.Popen(shlex.split(buildcmd),
                 cwd= bsnode.abspath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
