@@ -191,63 +191,37 @@ def configure(conf):
 
     #handling PLATFORM
     if conf.env.PLATFORM == 'android' :
-        #preparing cordova project
-        conf.start_msg("Checking Cordova Project")
-        cordova_create_node = conf.path.find_node(conf.env.CORDOVA_PATH).find_node("bin").find_node("create")
-        if cordova_create_node is None : conf.fatal("bin/create was not found in " + conf.env.CORDOVA_PATH + ". Cannot continue.")
-
-
-        #nodeJS detection
-        def detect_nodeJS() :
-            conf.start_msg("=> NodeJS bin/ should be in your PATH")
-            nJS_detect = subprocess.Popen("node -v",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,)
-            out,err = nJS_detect.communicate()
-            if nJS_detect.returncode == 0 :
-                conf.to_log(out)
-                conf.to_log(err)
-                conf.end_msg("ok","GREEN")
-                return True
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-        
         android_pub_node = conf.path.find_node("publish").find_node("android")
         if android_pub_node is None : conf.fatal("Cannot find publish/android path")
         android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         if android_proj_node is None :
             conf.end_msg("failed","RED")
-            #detecting nodeJS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
-            if detect_nodeJS():
-                conf.start_msg("Building Cordova Project")
-                cordova_create_proc = subprocess.Popen("\"" + cordova_create_node.abspath() + "\" \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + " \"" + ANDROID_PROJECT + "\"",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True)
-                out,err = cordova_create_proc.communicate()
-                if cordova_create_proc.returncode == 0 :
-                    conf.to_log(out)
-                    conf.to_log(err)
-                    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
-                    if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
-                    conf.end_msg(android_proj_node.relpath(),"GREEN")
-                else :
-                    conf.end_msg("failed","RED")
-                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-        else :
-            conf.end_msg("ok","GREEN")
+
+            conf.start_msg("Building Cordova Project")
+            cordova_create_proc = subprocess.Popen("cordova create \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + "\" \"" + ANDROID_PROJECT + "\"",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = cordova_create_proc.communicate()
+            if cordova_create_proc.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+                if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
+                conf.end_msg(android_proj_node.relpath(),"GREEN")
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
   
         #find assets/www dir
-        assetswww_dir = android_proj_node.find_dir('assets').find_dir('www')
-        if assetswww_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
+        www_dir = android_proj_node.find_dir('www')
+        if www_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
         #cleaning basic cordova project for automatically added items and for old build item
         #TODO what about '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico' ?
         #TODO why not delete everything except cordova.js (and maybe master.css) ?
         #TODO what if we need cordova.js in the project use ??
         for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
-            delnode = assetswww_dir.find_node(todel)
+            delnode = www_dir.find_node(todel)
             if delnode is not None :
                 if os.path.isdir(delnode.relpath()) :
                     removeLoc(delnode.relpath())
@@ -380,13 +354,13 @@ def build(bld):
         pubandroid_dir = bld.path.get_src().find_dir('publish').find_dir('android').find_dir(ANDROID_PROJECT)
         if pubandroid_dir is None : bld.fatal("publish/android/" + ANDROID_PROJECT + " subfolder was not found. Please run waf configure.")
         #find assets/www dir
-        assetswww_dir = pubandroid_dir.find_dir('assets').find_dir('www')
-        if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
-        assetswwwscripts_dir = assetswww_dir.make_node('scripts')
-        assetswwwscripts_dir.mkdir()
+        www_dir = pubandroid_dir.find_dir('www')
+        if www_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
+        wwwscripts_dir = www_dir.make_node('scripts')
+        wwwscripts_dir.mkdir()
 
         if bld.env.ENGINE == "dojo" :
-            assetswwwscriptsdojo_dir = assetswwwscripts_dir.make_node("dojo")
+            assetswwwscriptsdojo_dir = wwwscripts_dir.make_node("dojo")
             removeLoc(assetswwwscriptsdojo_dir.abspath())
             assetswwwscriptsdojo_dir.mkdir()
     #end PLATFORM android
@@ -465,7 +439,7 @@ def build(bld):
                 if bld.env.PLATFORM == 'android' :
                     bld(rule = cp_task,
                         source = jsBuildFile.get_src(),
-                        target = assetswww_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
+                        target = www_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
                         after = "buildApp",
                         before = "androbuild_task")
 
@@ -519,8 +493,8 @@ def build(bld):
                             shutil.copytree(_thimg.abspath(), bldCssThImgsNode.abspath())
 
                         if bld.env.PLATFORM == 'android' :
-                            #print assetswww_dir.make_node("css").make_node(tname).abspath()
-                            assetswwwCssThemeNode = assetswww_dir.make_node("css").make_node(tname)
+                            #print www_dir.make_node("css").make_node(tname).abspath()
+                            assetswwwCssThemeNode = www_dir.make_node("css").make_node(tname)
                             removeLoc(assetswwwCssThemeNode.abspath())
                             shutil.copytree(bldCssThNode.abspath(), assetswwwCssThemeNode.abspath())
 
@@ -574,7 +548,7 @@ def build(bld):
                     #copying
                     bld(rule=cp_task,
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
-                        target=assetswww_dir.make_node(static.path_from(htdocs_dir)))
+                        target=www_dir.make_node(static.path_from(htdocs_dir)))
 
         #Compile app src files
         jsFiles = ['*.js']
@@ -588,7 +562,7 @@ def build(bld):
             if bld.env.PLATFORM == 'android' :
                 bld(rule = cbuild_task,
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
-                    target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir)))
+                    target = wwwscripts_dir.make_node(js.path_from(scripts_dir)))
 
         #copy build task call
         cpBuild()

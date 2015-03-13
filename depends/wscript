@@ -49,6 +49,12 @@ APACHE_CODEC_URL = "http://mir2.ovh.net/ftp.apache.org/dist/commons/codec/binari
 APACHE_CODEC_UNZIP = "commons-codec-" + APACHE_CODEC_VERSION
 APACHE_CODEC_JAR = "commons-codec-" + APACHE_CODEC_VERSION + ".jar"
 
+#list of tools used by the script.
+#Add any tools needed in order to check for his existence
+tools = {
+	"npm" : 	{"action" : ""},
+	"cordova" : 	{"action" : ""},
+}
 
 top = '.'
 out = 'wbuild'
@@ -72,8 +78,7 @@ def configure(conf):
     if conf.options.platform not in PLATFORMS :
       conf.fatal("The platform " + conf.options.platform + " is unknown. Please use one of " + PLATFORMS)
     conf.env.PLATFORM = conf.options.platform #setting up global variable
-
-
+    	
     #MACROS
     def DL_web(url, filename) :
         """ Download url to filename if --download and needed """
@@ -117,10 +122,62 @@ def configure(conf):
         else : conf.end_msg("ok", color="GREEN")
         return unzipnode
    
+    def npmInstall(package, module, systemWide=False) :
+        conf.start_msg("Installing " + package + " via npm into " + module)
+
+        cmd = ''
+        if platform.system() == 'Windows' :
+            #TODO cmd = 'cmake -G "Visual Studio 12" -DDragonfall_ENABLE_TESTS=ON -DDragonfall_VERSION=' + ctx.env.VERSION + " " + ctx.path.path_from(cmakeBinNode)
+            conf.end_msg("NOT IMPLEMENTED","RED")
+        elif platform.system() == 'Linux' :
+            cmd = '{} npm install {} {}'.format('sudo' if systemWide else '', '-g' if systemWide else '',package)
+        elif platform.system() == 'Darwin' : 
+            #TODO cmd = 'TODO'
+            conf.end_msg("NOT IMPLEMENTED","RED")
+        print cmd
+        npmproc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True
+        )
+        # read line without blocking
+        for line in npmproc.stdout :
+            sys.stdout.write(line)
+	
+        npmproc.wait()
+        if npmproc.returncode != 0 :
+            conf.end_msg("failed : exit status = " + str(npmproc.returncode),"RED")
+            conf.fatal("npm failed")
+        else:
+            if os.path.isfile(module) :
+                conf.end_msg("ok ","GREEN")
+                return True
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("npm succeeded but " + module + " cannot be found.")
+            return False
+            
+
     def touch(fname, times=None):
         with file(fname, 'a'):
             os.utime(fname, times)
     #end of MACROS
+
+    # check tools
+    for tool in tools:
+        try:
+            if "path" in tools[tool].keys():
+                conf.find_program(tool, path_list = os.path.join(ctx.path.abspath(), tools[tool]["path"]))
+            else:
+                conf.find_program(tool)
+        except conf.errors.ConfigurationError:
+            if "cordova" == tool :
+                cordova_module = '/usr/lib/node_modules/cordova/cordova.js'
+                if not os.path.isfile(cordova_module) :
+                    npmInstall('cordova',cordova_module,True)
+            else :
+                conf.fatal('Cannot find \"' + tool + '\"! Please install it prior to continue.')
 
     if MARKDOWN :
         #download Markdown 2 html parser
@@ -133,133 +190,7 @@ def configure(conf):
         conf.env.DEPENDS.append(LZSTRING_FN)
     
     if conf.env.PLATFORM == 'android' :
-        #download cordova for mobile packaging
-        DL_web(CORDOVA_URL,CORDOVA_FN)
-        unzip(CORDOVA_FN,CORDOVA_UNZIP)
-        conf.env.CORDOVA_PATH = unzip(CORDOVA_ANDROID_FN,CORDOVA_ANDROID_UNZIP, os.path.join(conf.path.srcpath(), CORDOVA_UNZIP)).relpath()
-
-        #download apache codec for mobile packaging
-        DL_web(APACHE_CODEC_URL,APACHE_CODEC_FN)
-        unzip(APACHE_CODEC_FN,APACHE_CODEC_UNZIP)
-    
-        def detect_android() :
-            conf.start_msg("=> Android SDK tools/ should be in your PATH")
-            android_detect = subprocess.Popen("android -h",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,)
-            out,err = android_detect.communicate()
-            # for unknown reason this command returns 1 on linux but 0 on windows...
-            if (os.name == 'posix' and android_detect.returncode == 1) or (os.name == 'nt' and android_detect.returncode == 0):
-                conf.to_log(out)
-                conf.to_log(err)    
-                conf.end_msg("ok","GREEN")
-                    
-                conf.start_msg("=> Android SDK tools-platform/ should be in your PATH")
-                adb_detect = subprocess.Popen("adb version",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True,)
-                out,err = adb_detect.communicate()
-                if adb_detect.returncode == 0 :
-                    conf.to_log(out)
-                    conf.to_log(err)
-                    conf.end_msg("ok","GREEN")
-                    return True
-                else :
-                    conf.end_msg("failed","RED")
-                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-
-        def detect_javac() :
-            conf.start_msg("=> Java JDK bin/ should be in your PATH")
-            javac_detect = subprocess.Popen("javac -version",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,)
-            out,err = javac_detect.communicate()
-            if javac_detect.returncode == 0 :
-                conf.to_log(out)
-                conf.to_log(err)
-                conf.end_msg("ok","GREEN")
-                return True
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-            
-        def detect_ant() :
-            conf.start_msg("=> Apache ant bin/ should be in your PATH")
-            ant_detect = subprocess.Popen("ant -version",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,)
-            out,err = ant_detect.communicate()
-            if ant_detect.returncode == 0 :
-                conf.to_log(out)
-                conf.to_log(err)
-                conf.end_msg("ok","GREEN")
-                return True
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-    
-        #on linux only : setting permissions for cordova scripts
-        if os.name == 'posix' and platform.system() == 'Linux':
-            cordovacreate = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("bin").find_node("create")
-            if cordovacreate is None : conf.fatal("ERROR : " + CORDOVA_ANDROID_UNZIP + "/bin/create not found.")
-            os.chmod(cordovacreate.abspath(),stat.S_IXUSR | stat.S_IRUSR)
-        #elif os.name == 'posix' and platform.system() == 'Darwin':
-        #    raise Exception("NOT IMPLEMENTED") #TODO
-        #elif os.name == 'nt' and platform.system() == 'Windows' :
-        #
-        
-        #building cordova
-        conf.start_msg("Checking for Cordova Android Jar")
-        commoncodecnode = conf.path.find_node(APACHE_CODEC_UNZIP).find_node(APACHE_CODEC_JAR)
-        if commoncodecnode is None : conf.fatal(os.path.join(APACHE_CODEC_UNZIP.relpath(),APACHE_CODEC_JAR) + " not found")
-        cordovafmwknode = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("framework")
-        cordovafmwklibs = cordovafmwknode.find_node("libs")
-        if cordovafmwklibs is None : 
-            cordovafmwklibs = conf.path.find_node(CORDOVA_ANDROID_UNZIP).make_node("framework/libs")
-            if not os.path.exists(cordovafmwklibs.abspath()) : cordovafmwklibs.mkdir()
-
-        shutil.copy(commoncodecnode.abspath(),cordovafmwklibs.abspath())
-        #BUG : Detetion of successful copy not working ??
-        #commoncodecfmwknode = conf.path.find_node(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())))
-        #if commoncodecfmwknode is None :
-        #    conf.fatal(os.path.join(cordovafmwklibs.relpath(),os.path.basename(commoncodecnode.abspath())) + " not found")
-
-        jarnode = cordovafmwknode.find_node(CORDOVA_JAR)
-        #checking if we need to build cordova android
-        if jarnode is None :
-            conf.end_msg("failed", color="RED")
-            #detecting android tools
-            if detect_android() and detect_javac() and detect_ant():
-                conf.start_msg("=> Building Cordova Android Jar")
-                crdv_android_build_proc = subprocess.Popen("android update project -p . -t android-19 && ant jar",
-                    cwd= cordovafmwknode.abspath(),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True,)
-                out,err = crdv_android_build_proc.communicate()
-                if crdv_android_build_proc.returncode == 0 :
-                    conf.to_log(out)
-                    conf.to_log(err)
-                    #finding the jar
-                    jarnode = cordovafmwknode.find_node(CORDOVA_JAR)
-                    if jarnode is None :
-                        conf.fatal("ERROR : " + CORDOVA_JAR + " not found !")
-                    else :
-                        conf.end_msg(jarnode.relpath(),"GREEN")
-                else :
-                    conf.end_msg("failed","RED")
-                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-        else :
-            conf.end_msg(jarnode.relpath(),"GREEN")
-    #end of conf.env.PLATFORM
-
+        pass
 
     if conf.env.ENGINE == "dojo" :
 
