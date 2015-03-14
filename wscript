@@ -592,6 +592,7 @@ def build(bld):
     if bld.env.PLATFORM == 'android' : 
         android_pub_node = bld.path.find_node("publish").find_node("android")
         android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+        android_plat_node = android_proj_node.find_node("platforms").find_node("android")
         # last tuning to make it all work
         #TODO
         # building android version
@@ -601,21 +602,12 @@ def build(bld):
           src = task.inputs[0].abspath()
           tgt = task.outputs[0].abspath()
 
-          dgbopt = " --release "
+          dbgopt = " --release "
           if bld.options.bT == 'debug':
             dbgopt = " --debug "
-          
-          #finding relevant build script
-          buildandroid_node = None
-          if os.name == 'posix' and platform.system() == 'Linux':
-              buildandroid_node = android_proj_node.find_node("cordova").find_node("build")
-              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
-              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
-          elif os.name == 'nt' and platform.system() == 'Windows' :
-              buildandroid_node = android_proj_node.find_node("cordova").find_node("build.bat")
-              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
-            
-          androbuild_proc = subprocess.Popen(buildandroid_node.relpath() + dbgopt ,
+                      
+          androbuild_proc = subprocess.Popen("cordova build android " + dbgopt ,
+            cwd=android_proj_node.relpath(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True)
@@ -632,8 +624,8 @@ def build(bld):
 
         #defining the build task
         bld(rule = androbuild_task,
-            source = android_proj_node.make_node("build.xml"),
-            target = android_proj_node.make_node(os.path.join("ant-build",ANDROID_PROJECT + "-debug.apk")), #param to check if build is at the good location
+            source = android_proj_node.make_node("config.xml"),
+            target = android_plat_node.make_node(os.path.join("ant-build","MainActivity-debug.apk")), #param to check if build is at the good location
             always = True)
 
     elif bld.env.PLATFORM == 'chrome' :
