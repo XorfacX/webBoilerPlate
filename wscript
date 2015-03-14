@@ -197,7 +197,7 @@ def configure(conf):
         if android_proj_node is None :
             conf.end_msg("failed","RED")
 
-            conf.start_msg("Building Cordova Project")
+            conf.start_msg("Creating Cordova Project")
             cordova_create_proc = subprocess.Popen("cordova create \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + "\" \"" + ANDROID_PROJECT + "\"",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -209,6 +209,26 @@ def configure(conf):
                 android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
                 if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
                 conf.end_msg(android_proj_node.relpath(),"GREEN")
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+                
+        #TODO : move this into the build. ideally the target platform can be decided only at build time.
+        android_plat_node = android_proj_node.find_node("platforms").find_node("android")
+        if android_plat_node is None :
+            conf.start_msg("Adding Android platform to Cordova Project")
+            cordova_android_proc = subprocess.Popen("cordova platform add android",
+                cwd=android_proj_node.relpath(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = cordova_android_proc.communicate()
+            if cordova_android_proc.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                android_plat_node = android_pub_node.find_node("platforms").find_node("android")
+                if android_plat_node is None : conf.fatal("platforms/android was not found")
+                conf.end_msg(android_plat_node.relpath(),"GREEN")
             else :
                 conf.end_msg("failed","RED")
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
@@ -575,7 +595,6 @@ def build(bld):
         # last tuning to make it all work
         #TODO
         # building android version
-
            
         #define a cordova build task
         def androbuild_task(task):
