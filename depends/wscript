@@ -52,8 +52,8 @@ APACHE_CODEC_JAR = "commons-codec-" + APACHE_CODEC_VERSION + ".jar"
 #list of tools used by the script.
 #Add any tools needed in order to check for his existence
 tools = {
-	"npm" : 	{"action" : ""},
-	"cordova" : 	{"action" : ""},
+    "npm" : {"action" : ""},
+    "cordova" : {"action" : ""},
 }
 
 top = '.'
@@ -78,7 +78,7 @@ def configure(conf):
     if conf.options.platform not in PLATFORMS :
       conf.fatal("The platform " + conf.options.platform + " is unknown. Please use one of " + PLATFORMS)
     conf.env.PLATFORM = conf.options.platform #setting up global variable
-    	
+        
     #MACROS
     def DL_web(url, filename) :
         """ Download url to filename if --download and needed """
@@ -128,7 +128,8 @@ def configure(conf):
         cmd = ''
         if platform.system() == 'Windows' :
             #TODO cmd = 'cmake -G "Visual Studio 12" -DDragonfall_ENABLE_TESTS=ON -DDragonfall_VERSION=' + ctx.env.VERSION + " " + ctx.path.path_from(cmakeBinNode)
-            conf.end_msg("NOT IMPLEMENTED","RED")
+            #conf.end_msg("NOT IMPLEMENTED","RED")
+            cmd = 'npm install {} {}'.format('-g' if systemWide else '',package)
         elif platform.system() == 'Linux' :
             cmd = '{} npm install {} {}'.format('sudo' if systemWide else '', '-g' if systemWide else '',package)
         elif platform.system() == 'Darwin' : 
@@ -144,38 +145,55 @@ def configure(conf):
         # read line without blocking
         for line in npmproc.stdout :
             sys.stdout.write(line)
-	
+    
         npmproc.wait()
         if npmproc.returncode != 0 :
             conf.end_msg("failed : exit status = " + str(npmproc.returncode),"RED")
             conf.fatal("npm failed")
         else:
-            if os.path.isfile(module) :
-                conf.end_msg("ok ","GREEN")
-                return True
-            else :
+            if not findTool(package) :
                 conf.end_msg("failed","RED")
                 conf.fatal("npm succeeded but " + module + " cannot be found.")
-            return False
+                return False
+            else :
+                conf.end_msg("ok ","GREEN")
+                return True
             
 
     def touch(fname, times=None):
         with file(fname, 'a'):
             os.utime(fname, times)
-    #end of MACROS
-
-    # check tools
-    for tool in tools:
+            
+    def findTool(tool):
         try:
             if "path" in tools[tool].keys():
                 conf.find_program(tool, path_list = os.path.join(ctx.path.abspath(), tools[tool]["path"]))
             else:
                 conf.find_program(tool)
+            
+            return True
         except conf.errors.ConfigurationError:
+            return False
+            
+    ### End of MACROS ###
+
+    # check tools
+    for tool in tools:
+        if not findTool(tool):
             if "cordova" == tool :
-                cordova_module = '/usr/lib/node_modules/cordova/cordova.js'
+                if platform.system() == 'Windows' :
+                    cordova_module = '%USERPROFILE%\\AppData\\Roaming\\npm\\node_modules\\cordova\\cordova.js'
+                elif platform.system() == 'Linux' :
+                    cordova_module = '/usr/lib/node_modules/cordova/cordova.js'
+                elif platform.system() == 'Darwin' :
+                    #TODO cmd = 'TODO'
+                    conf.end_msg("NOT IMPLEMENTED","RED")
+                else: 
+                    conf.end_msg("NOT IMPLEMENTED","RED")
+                    
                 if not os.path.isfile(cordova_module) :
                     npmInstall('cordova',cordova_module,True)
+                    
             else :
                 conf.fatal('Cannot find \"' + tool + '\"! Please install it prior to continue.')
 
