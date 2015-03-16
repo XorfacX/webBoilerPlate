@@ -214,7 +214,7 @@ def configure(conf):
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
                 
         #TODO : move this into the build. ideally the target platform can be decided only at build time.
-        android_plat_node = android_proj_node.find_node("platforms").find_node("android")
+        android_plat_node = (android_proj_node.find_node("platforms") and android_proj_node.find_node("platforms").find_node("android"))
         if android_plat_node is None :
             conf.start_msg("Adding Android platform to Cordova Project")
             cordova_android_proc = subprocess.Popen("cordova platform add android",
@@ -226,7 +226,7 @@ def configure(conf):
             if cordova_android_proc.returncode == 0 :
                 conf.to_log(out)
                 conf.to_log(err)
-                android_plat_node = android_pub_node.find_node("platforms").find_node("android")
+                android_plat_node = (android_proj_node.find_node("platforms") and android_proj_node.find_node("platforms").find_node("android"))
                 if android_plat_node is None : conf.fatal("platforms/android was not found")
                 conf.end_msg(android_plat_node.relpath(),"GREEN")
             else :
