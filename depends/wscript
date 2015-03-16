@@ -208,6 +208,91 @@ def configure(conf):
         conf.env.DEPENDS.append(LZSTRING_FN)
     
     if conf.env.PLATFORM == 'android' :
+        #download apache codec for mobile packaging
+        DL_web(APACHE_CODEC_URL,APACHE_CODEC_FN)
+        unzip(APACHE_CODEC_FN,APACHE_CODEC_UNZIP)
+    
+        def detect_android() :
+            conf.start_msg("=> Android SDK tools/ should be in your PATH")
+            android_detect = subprocess.Popen("android -h",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,)
+            out,err = android_detect.communicate()
+            # for unknown reason this command returns 1 on linux but 0 on windows...
+            if (os.name == 'posix' and android_detect.returncode == 1) or (os.name == 'nt' and android_detect.returncode == 0):
+                conf.to_log(out)
+                conf.to_log(err)    
+                conf.end_msg("ok","GREEN")
+                    
+                conf.start_msg("=> Android SDK tools-platform/ should be in your PATH")
+                adb_detect = subprocess.Popen("adb version",
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,)
+                out,err = adb_detect.communicate()
+                if adb_detect.returncode == 0 :
+                    conf.to_log(out)
+                    conf.to_log(err)
+                    conf.end_msg("ok","GREEN")
+                    return True
+                else :
+                    conf.end_msg("failed","RED")
+                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+
+        def detect_javac() :
+            conf.start_msg("=> Java JDK bin/ should be in your PATH")
+            javac_detect = subprocess.Popen("javac -version",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,)
+            out,err = javac_detect.communicate()
+            if javac_detect.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                conf.end_msg("ok","GREEN")
+                return True
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+            
+        def detect_ant() :
+            conf.start_msg("=> Apache ant bin/ should be in your PATH")
+            ant_detect = subprocess.Popen("ant -version",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True,)
+            out,err = ant_detect.communicate()
+            if ant_detect.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                conf.end_msg("ok","GREEN")
+                return True
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+    
+        #on linux only: setting permissions for cordova scripts
+        if os.name == 'posix' and platform.system() == 'Linux':
+            cordovacreate = conf.path.find_node(CORDOVA_ANDROID_UNZIP).find_node("bin").find_node("create")
+            if cordovacreate is None : conf.fatal("ERROR : " + CORDOVA_ANDROID_UNZIP + "/bin/create not found.")
+            os.chmod(cordovacreate.abspath(),stat.S_IXUSR | stat.S_IRUSR)
+        #elif os.name == 'posix' and platform.system() == 'Darwin':
+        #    raise Exception("NOT IMPLEMENTED") #TODO
+        #elif os.name == 'nt' and platform.system() == 'Windows' :
+        #
+        
+        #checking all is there
+        conf.start_msg("Android build platform setup: ")
+        if detect_android() and detect_javac() and detect_ant():
+            conf.end_msg("OK","GREEN")
+        else:
+            conf.end_msg("failed","RED")
+        
+    #end of conf.env.PLATFORM
         pass
 
     if conf.env.ENGINE == "dojo" :
