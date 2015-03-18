@@ -373,16 +373,16 @@ def build(bld):
         #find publish dir
         pubandroid_dir = bld.path.get_src().find_dir('publish').find_dir('android').find_dir(ANDROID_PROJECT)
         if pubandroid_dir is None : bld.fatal("publish/android/" + ANDROID_PROJECT + " subfolder was not found. Please run waf configure.")
-        #find assets/www dir
+        #find www dir
         www_dir = pubandroid_dir.find_dir('www')
-        if www_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
+        if www_dir is None : bld.fatal("www subfolder was not found. Cannot continue.")
         wwwscripts_dir = www_dir.make_node('scripts')
         wwwscripts_dir.mkdir()
 
         if bld.env.ENGINE == "dojo" :
-            assetswwwscriptsdojo_dir = wwwscripts_dir.make_node("dojo")
-            removeLoc(assetswwwscriptsdojo_dir.abspath())
-            assetswwwscriptsdojo_dir.mkdir()
+            wwwscriptsdojo_dir = wwwscripts_dir.make_node("dojo")
+            removeLoc(wwwscriptsdojo_dir.abspath())
+            wwwscriptsdojo_dir.mkdir()
     #end PLATFORM android
     elif bld.env.PLATFORM == 'chrome' :
         # find chrome_store folder
@@ -471,7 +471,7 @@ def build(bld):
                 removeLoc(scriptsresnode.abspath())
                 shutil.copytree(dojoresnode.abspath(), scriptsresnode.abspath())
                 if bld.env.PLATFORM == 'android' :
-                    shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
+                    shutil.copytree(dojoresnode.abspath(), wwwscriptsdojo_dir.make_node("resources").abspath())
         
             if DIJIT :
                 #handling Dijit is really there
@@ -489,7 +489,7 @@ def build(bld):
                     if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
                         shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
-                            shutil.copytree(bldscriptsdnlsnode.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
+                            shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsdojo_dir.make_node("nls").abspath())
 
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
@@ -514,9 +514,9 @@ def build(bld):
 
                         if bld.env.PLATFORM == 'android' :
                             #print www_dir.make_node("css").make_node(tname).abspath()
-                            assetswwwCssThemeNode = www_dir.make_node("css").make_node(tname)
-                            removeLoc(assetswwwCssThemeNode.abspath())
-                            shutil.copytree(bldCssThNode.abspath(), assetswwwCssThemeNode.abspath())
+                            wwwCssThemeNode = www_dir.make_node("css").make_node(tname)
+                            removeLoc(wwwCssThemeNode.abspath())
+                            shutil.copytree(bldCssThNode.abspath(), wwwCssThemeNode.abspath())
 
             if bld.env.PLATFORM == 'android' :
                 #TODO build and copy dojox mobile themes
