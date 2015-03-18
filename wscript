@@ -562,7 +562,8 @@ def build(bld):
                     #copying
                     bld(rule=cp_task,
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
-                        target=www_dir.make_node(static.path_from(htdocs_dir)))
+                        target=www_dir.make_node(static.path_from(htdocs_dir)),
+                        before = "androbuild_task")
 
         #Compile app src files
         jsFiles = ['*.js']
@@ -576,7 +577,8 @@ def build(bld):
             if bld.env.PLATFORM == 'android' :
                 bld(rule = cbuild_task,
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
-                    target = wwwscripts_dir.make_node(js.path_from(scripts_dir)))
+                    target = wwwscripts_dir.make_node(js.path_from(scripts_dir)),
+                    before = "androbuild_task")
 
         #copy build task call
         cpBuild()
@@ -617,9 +619,10 @@ def build(bld):
           return androbuild_proc.returncode
 
         #defining the build task
+        #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
         bld(rule = androbuild_task,
             source = android_proj_node.make_node("config.xml"),
-            target = android_plat_node.make_node(os.path.join("ant-build","MainActivity-debug.apk")), #param to check if build is at the good location
+            target = android_plat_node.make_node(os.path.join("ant-build","MainActivity-" + bld.options.bT + ".apk")), #param to check if build is at the good location depending on build type
             always = True)
 
     elif bld.env.PLATFORM == 'chrome' :
