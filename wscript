@@ -306,6 +306,7 @@ def build(bld):
         shutil.rmtree(location)
 
     #define a portable copy task
+    #WARNING when using this task files are not copied each build but only the FIRST TIME. if you need to copy them again, you need to do a full distclean before.
     def cp_task(task):
         src = task.inputs[0].abspath()
         tg = task.outputs[0].abspath()
@@ -332,7 +333,7 @@ def build(bld):
         if adv_opti is True:
             adv = " --compilation_level ADVANCED_OPTIMIZATIONS "
         cbuild_cmd = "java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT" 
-        print "Calling Closure Compiler : " + cbuild_cmd
+        #print "Calling Closure Compiler : " + cbuild_cmd
         cbuild_proc = subprocess.Popen(shlex.split(cbuild_cmd),
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out,err = cbuild_proc.communicate()
@@ -449,7 +450,8 @@ def build(bld):
                 bld(rule = cp_task,
                     source = jsBuildFile.get_src(),
                     target = bldnode.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)),
-                    after = "buildApp") #copy them to the build directory
+                    after = "buildApp",
+                    before = "androbuild_task") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     bld(rule = cp_task,
                         source = jsBuildFile.get_src(),
@@ -557,7 +559,8 @@ def build(bld):
             if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
                 bld(rule=cp_task,
                     source=static.get_src(),
-                    target=bldnode.make_node(static.path_from(htdocs_dir))) #copy them to the build directory
+                    target=bldnode.make_node(static.path_from(htdocs_dir)),
+                    before = "androbuild_task") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     #copying
                     bld(rule=cp_task,
@@ -573,7 +576,8 @@ def build(bld):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
             bld(rule = cbuild_task,
                 source = js.get_src(),
-                target = bldscriptsnode.make_node(js.path_from(scripts_dir)))
+                target = bldscriptsnode.make_node(js.path_from(scripts_dir)),
+                before = "androbuild_task")
             if bld.env.PLATFORM == 'android' :
                 bld(rule = cbuild_task,
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
@@ -621,7 +625,8 @@ def build(bld):
         #defining the build task
         bld(rule = androbuild_task,
             source = android_proj_node.make_node("config.xml"),
-            always = True)
+            always = True,
+            name = "androbuild_task")
 
     elif bld.env.PLATFORM == 'chrome' :
             
