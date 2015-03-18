@@ -595,34 +595,32 @@ def build(bld):
            
         #define a cordova build task
         def androbuild_task(task):
-          src = task.inputs[0].abspath()
-          tgt = task.outputs[0].abspath()
+            src = task.inputs[0].abspath()
 
-          dbgopt = " --release "
-          if bld.options.bT == 'debug':
-            dbgopt = " --debug "
-                      
-          androbuild_proc = subprocess.Popen("cordova build android " + dbgopt ,
+            dbgopt = " --release "
+            if bld.options.bT == 'debug':
+                dbgopt = " --debug "
+           
+            #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
+            androbuild_proc = subprocess.Popen("cordova build android " + dbgopt ,
             cwd=android_proj_node.relpath(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True)
-          out,err = androbuild_proc.communicate()
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = androbuild_proc.communicate()
 
-          if (androbuild_proc.returncode != 0) :
-            bld.fatal("Android Build failed. Error : \n" + err)
-          else :
-            if out is not None and out.strip() != "" :
-              print out
-            if err is not None and err.strip() != "" :
-              print err
-          return androbuild_proc.returncode
+            if (androbuild_proc.returncode != 0) :
+                bld.fatal("Android Build failed. Error : \n" + err)
+            else :
+                if out is not None and out.strip() != "" :
+                    print out
+                if err is not None and err.strip() != "" :
+                    print err
+            return androbuild_proc.returncode
 
         #defining the build task
-        #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
         bld(rule = androbuild_task,
             source = android_proj_node.make_node("config.xml"),
-            target = android_plat_node.make_node(os.path.join("ant-build","MainActivity-" + bld.options.bT + ".apk")), #param to check if build is at the good location depending on build type
             always = True)
 
     elif bld.env.PLATFORM == 'chrome' :
