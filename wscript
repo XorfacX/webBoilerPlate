@@ -233,20 +233,17 @@ def configure(conf):
                 conf.end_msg("failed","RED")
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
   
-        #find assets/www dir
-        www_dir = android_proj_node.find_dir('www')
-        if www_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
-        #cleaning basic cordova project for automatically added items and for old build item
-        #TODO what about '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico' ?
-        #TODO why not delete everything except cordova.js (and maybe master.css) ?
-        #TODO what if we need cordova.js in the project use ??
-        for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
-            delnode = www_dir.find_node(todel)
-            if delnode is not None :
-                if os.path.isdir(delnode.relpath()) :
-                    removeLoc(delnode.relpath())
-                elif os.path.isfile(delnode.relpath()) :
-                    os.remove(delnode.relpath())
+        #find www & assets/www dir and clean them
+        #TODO remove empty folder too!
+        #TODO what if we need cordova.js in the project use ?? => we would need our cordova root to be the same has our git root and cordova/www must be configured to be called htdocs i guess (there is no way we change all our project folder names from htdocs to www). Otherwise we would have to copy cordova.js and cordova_plugins.js into htdocs but it must be done on configure and i dont think they're ready untill build time.
+        toRemove = ['www/**/*', 'platforms/android/assets/www/**/*']
+        for toRemoveEl in android_proj_node.ant_glob(toRemove): # find them
+            print toRemoveEl.relpath()
+            if toRemoveEl.relpath().find("cordova.js") == -1 and toRemoveEl.relpath().find("cordova_plugins.js") == -1: #ignoring cordova files
+                if os.path.isdir(toRemoveEl.relpath()) :
+                    removeLoc(toRemoveEl.relpath())
+                elif os.path.isfile(toRemoveEl.relpath()) :
+                    os.remove(toRemoveEl.relpath())
     
     elif conf.env.PLATFORM == 'chrome' :
         #TODO create a proj_node like for android for easiest computation
