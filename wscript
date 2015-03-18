@@ -234,16 +234,13 @@ def configure(conf):
                 conf.fatal("Command Output : \n" + out + "Error :\n" + err)
   
         #find www & assets/www dir and clean them
-        #TODO remove empty folder too!
         #TODO what if we need cordova.js in the project use ?? => we would need our cordova root to be the same has our git root and cordova/www must be configured to be called htdocs i guess (there is no way we change all our project folder names from htdocs to www). Otherwise we would have to copy cordova.js and cordova_plugins.js into htdocs but it must be done on configure and i dont think they're ready untill build time.
         toRemove = ['www/**/*', 'platforms/android/assets/www/**/*']
-        for toRemoveEl in android_proj_node.ant_glob(toRemove): # find them
-            print toRemoveEl.relpath()
-            if toRemoveEl.relpath().find("cordova.js") == -1 and toRemoveEl.relpath().find("cordova_plugins.js") == -1: #ignoring cordova files
-                if os.path.isdir(toRemoveEl.relpath()) :
-                    removeLoc(toRemoveEl.relpath())
-                elif os.path.isfile(toRemoveEl.relpath()) :
-                    os.remove(toRemoveEl.relpath())
+        for toRemoveEl in android_proj_node.ant_glob(toRemove, dir=True, excl=['**/cordova*.js']): # find them incl directories and ignoring cordova files
+            if os.path.isdir(toRemoveEl.relpath()) :
+                removeLoc(toRemoveEl.relpath())
+            elif os.path.isfile(toRemoveEl.relpath()) :
+                os.remove(toRemoveEl.relpath())
     
     elif conf.env.PLATFORM == 'chrome' :
         #TODO create a proj_node like for android for easiest computation
