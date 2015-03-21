@@ -46,7 +46,7 @@ def options(opt):
     
     opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [True | False (default)')
 
-    opt.add_option('--bT', action='store', default='release', help='build type [debug | release (default)]')
+    opt.add_option('--bT', action='store', default='debug', help='build type [debug (default)| release ]')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -241,6 +241,7 @@ def configure(conf):
                 removeLoc(toRemoveEl.relpath())
             elif os.path.isfile(toRemoveEl.relpath()) :
                 os.remove(toRemoveEl.relpath())
+        #TODO : this should be handled by clean(invert of build) or distclean ( invert of configure )
     
     elif conf.env.PLATFORM == 'chrome' :
         #TODO create a proj_node like for android for easiest computation
@@ -563,6 +564,7 @@ def build(bld):
                     before = "androbuild_task") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     #copying
+                    print "Copying " + bldnode.make_node(static.path_from(htdocs_dir)).abspath() + " to " + www_dir.make_node(static.path_from(htdocs_dir)).abspath()
                     bld(rule=cp_task,
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
                         target=www_dir.make_node(static.path_from(htdocs_dir)),
@@ -601,13 +603,13 @@ def build(bld):
         def androbuild_task(task):
             src = task.inputs[0].abspath()
 
-            dbgopt = " --release "
-            if bld.options.bT == 'debug':
-                dbgopt = " --debug "
+            dbgopt = " --debug "
+            if bld.options.bT == 'release':
+                dbgopt = " --release "
            
             #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
-            androbuild_proc = subprocess.Popen("cordova build android " + dbgopt ,
-            cwd=android_proj_node.relpath(),
+            androbuild_proc = subprocess.Popen("cordova build " + dbgopt + " android",
+                cwd=android_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=True)
