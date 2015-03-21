@@ -25,9 +25,9 @@ DOJO_FILENAME = "dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_UNZIP = "dojo-release-" + DOJO_VERSION + "-src"
 BUILD_PROFILE = "build.profile.js"
 
-#> https://raw.github.com/evilstreak/markdown-js/master/lib/markdown.js
+#> https://raw.githubusercontent.com/FairyDwarves/pagedown/master/Markdown.Converter.js
 MARKDOWN_PARSER_FN = "Markdown.Converter.js"
-MARKDOWN_PARSER_URL = "http://pagedown.googlecode.com/hg/" + MARKDOWN_PARSER_FN
+MARKDOWN_PARSER_URL = "https://raw.githubusercontent.com/FairyDwarves/pagedown/master/" + MARKDOWN_PARSER_FN
 
 #> http://pieroxy.net/blog/pages/lz-string/index.html
 LZSTRING_FN = "lz-string-1.3.3.js"
