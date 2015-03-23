@@ -46,7 +46,7 @@ def options(opt):
     
     opt.add_option('--partial', action='store_true', default=False, help='do not rebuild the app if build folder is present [True | False (default)')
 
-    opt.add_option('--bT', action='store', default='release', help='build type [debug | release (default)]')
+    opt.add_option('--bT', action='store', default='debug', help='build type [debug (default)| release ]')
 
 def configure(conf):
     conf.check_waf_version(mini='1.6.3')
@@ -191,68 +191,57 @@ def configure(conf):
 
     #handling PLATFORM
     if conf.env.PLATFORM == 'android' :
-        #preparing cordova project
-        conf.start_msg("Checking Cordova Project")
-        cordova_create_node = conf.path.find_node(conf.env.CORDOVA_PATH).find_node("bin").find_node("create")
-        if cordova_create_node is None : conf.fatal("bin/create was not found in " + conf.env.CORDOVA_PATH + ". Cannot continue.")
-
-
-        #nodeJS detection
-        def detect_nodeJS() :
-            conf.start_msg("=> NodeJS bin/ should be in your PATH")
-            nJS_detect = subprocess.Popen("node -v",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,)
-            out,err = nJS_detect.communicate()
-            if nJS_detect.returncode == 0 :
-                conf.to_log(out)
-                conf.to_log(err)
-                conf.end_msg("ok","GREEN")
-                return True
-            else :
-                conf.end_msg("failed","RED")
-                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-        
         android_pub_node = conf.path.find_node("publish").find_node("android")
         if android_pub_node is None : conf.fatal("Cannot find publish/android path")
         android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         if android_proj_node is None :
             conf.end_msg("failed","RED")
-            #detecting nodeJS http://cordova.apache.org/docs/en/3.4.0/guide_cli_index.md.html#The%20Command-Line%20Interface
-            if detect_nodeJS():
-                conf.start_msg("Building Cordova Project")
-                cordova_create_proc = subprocess.Popen("\"" + cordova_create_node.abspath() + "\" \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + " \"" + ANDROID_PROJECT + "\"",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True)
-                out,err = cordova_create_proc.communicate()
-                if cordova_create_proc.returncode == 0 :
-                    conf.to_log(out)
-                    conf.to_log(err)
-                    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
-                    if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
-                    conf.end_msg(android_proj_node.relpath(),"GREEN")
-                else :
-                    conf.end_msg("failed","RED")
-                    conf.fatal("Command Output : \n" + out + "Error :\n" + err)
-        else :
-            conf.end_msg("ok","GREEN")
+
+            conf.start_msg("Creating Cordova Project")
+            cordova_create_proc = subprocess.Popen("cordova create \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + "\" \"" + ANDROID_PROJECT + "\"",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = cordova_create_proc.communicate()
+            if cordova_create_proc.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+                if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
+                conf.end_msg(android_proj_node.relpath(),"GREEN")
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
+                
+        #TODO : move this into the build. ideally the target platform can be decided only at build time.
+        android_plat_node = (android_proj_node.find_node("platforms") and android_proj_node.find_node("platforms").find_node("android"))
+        if android_plat_node is None :
+            conf.start_msg("Adding Android platform to Cordova Project")
+            cordova_android_proc = subprocess.Popen("cordova platform add android",
+                cwd=android_proj_node.relpath(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = cordova_android_proc.communicate()
+            if cordova_android_proc.returncode == 0 :
+                conf.to_log(out)
+                conf.to_log(err)
+                android_plat_node = (android_proj_node.find_node("platforms") and android_proj_node.find_node("platforms").find_node("android"))
+                if android_plat_node is None : conf.fatal("platforms/android was not found")
+                conf.end_msg(android_plat_node.relpath(),"GREEN")
+            else :
+                conf.end_msg("failed","RED")
+                conf.fatal("Command Output : \n" + out + "Error :\n" + err)
   
-        #find assets/www dir
-        assetswww_dir = android_proj_node.find_dir('assets').find_dir('www')
-        if assetswww_dir is None : conf.fatal("assets/www subfolder was not found. Cannot continue.")
-        #cleaning basic cordova project for automatically added items and for old build item
-        #TODO what about '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '.ico' ?
-        #TODO why not delete everything except cordova.js (and maybe master.css) ?
-        #TODO what if we need cordova.js in the project use ??
-        for todel in ['css','img','images','js','scripts','fonts','audio','content','res','spec','index.html','main.js','spec.html']:
-            delnode = assetswww_dir.find_node(todel)
-            if delnode is not None :
-                if os.path.isdir(delnode.relpath()) :
-                    removeLoc(delnode.relpath())
-                elif os.path.isfile(delnode.relpath()) :
-                    os.remove(delnode.relpath())
+        #find www & assets/www dir and clean them
+        #TODO what if we need cordova.js in the project use ?? => we would need our cordova root to be the same has our git root and cordova/www must be configured to be called htdocs i guess (there is no way we change all our project folder names from htdocs to www). Otherwise we would have to copy cordova.js and cordova_plugins.js into htdocs but it must be done on configure and i dont think they're ready untill build time.
+        toRemove = ['www/**/*', 'platforms/android/assets/www/**/*']
+        for toRemoveEl in android_proj_node.ant_glob(toRemove, dir=True, excl=['**/cordova*.js']): # find them incl directories and ignoring cordova files
+            if os.path.isdir(toRemoveEl.relpath()) :
+                removeLoc(toRemoveEl.relpath())
+            elif os.path.isfile(toRemoveEl.relpath()) :
+                os.remove(toRemoveEl.relpath())
+        #TODO : this should be handled by clean(invert of build) or distclean ( invert of configure )
     
     elif conf.env.PLATFORM == 'chrome' :
         #TODO create a proj_node like for android for easiest computation
@@ -318,6 +307,7 @@ def build(bld):
         shutil.rmtree(location)
 
     #define a portable copy task
+    #WARNING when using this task files are not copied each build but only the FIRST TIME. if you need to copy them again, you need to do a full distclean before.
     def cp_task(task):
         src = task.inputs[0].abspath()
         tg = task.outputs[0].abspath()
@@ -344,7 +334,7 @@ def build(bld):
         if adv_opti is True:
             adv = " --compilation_level ADVANCED_OPTIMIZATIONS "
         cbuild_cmd = "java -jar \"" + bld.env.COMPILER_PATH + "\" " + adv + " --js \"" + src + "\" --js_output_file \"" + tg + "\" --warning_level DEFAULT" 
-        print "Calling Closure Compiler : " + cbuild_cmd
+        #print "Calling Closure Compiler : " + cbuild_cmd
         cbuild_proc = subprocess.Popen(shlex.split(cbuild_cmd),
                 cwd=bld.path.get_src().abspath(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out,err = cbuild_proc.communicate()
@@ -379,16 +369,16 @@ def build(bld):
         #find publish dir
         pubandroid_dir = bld.path.get_src().find_dir('publish').find_dir('android').find_dir(ANDROID_PROJECT)
         if pubandroid_dir is None : bld.fatal("publish/android/" + ANDROID_PROJECT + " subfolder was not found. Please run waf configure.")
-        #find assets/www dir
-        assetswww_dir = pubandroid_dir.find_dir('assets').find_dir('www')
-        if assetswww_dir is None : bld.fatal("assets/www subfolder was not found. Cannot continue.")
-        assetswwwscripts_dir = assetswww_dir.make_node('scripts')
-        assetswwwscripts_dir.mkdir()
+        #find www dir
+        www_dir = pubandroid_dir.find_dir('www')
+        if www_dir is None : bld.fatal("www subfolder was not found. Cannot continue.")
+        wwwscripts_dir = www_dir.make_node('scripts')
+        wwwscripts_dir.mkdir()
 
         if bld.env.ENGINE == "dojo" :
-            assetswwwscriptsdojo_dir = assetswwwscripts_dir.make_node("dojo")
-            removeLoc(assetswwwscriptsdojo_dir.abspath())
-            assetswwwscriptsdojo_dir.mkdir()
+            wwwscriptsdojo_dir = wwwscripts_dir.make_node("dojo")
+            removeLoc(wwwscriptsdojo_dir.abspath())
+            wwwscriptsdojo_dir.mkdir()
     #end PLATFORM android
     elif bld.env.PLATFORM == 'chrome' :
         # find chrome_store folder
@@ -461,11 +451,12 @@ def build(bld):
                 bld(rule = cp_task,
                     source = jsBuildFile.get_src(),
                     target = bldnode.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)),
-                    after = "buildApp") #copy them to the build directory
+                    after = "buildApp",
+                    before = "androbuild_task") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     bld(rule = cp_task,
                         source = jsBuildFile.get_src(),
-                        target = assetswww_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
+                        target = www_dir.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)).get_src(),
                         after = "buildApp",
                         before = "androbuild_task")
 
@@ -477,7 +468,7 @@ def build(bld):
                 removeLoc(scriptsresnode.abspath())
                 shutil.copytree(dojoresnode.abspath(), scriptsresnode.abspath())
                 if bld.env.PLATFORM == 'android' :
-                    shutil.copytree(dojoresnode.abspath(), assetswwwscriptsdojo_dir.make_node("resources").abspath())
+                    shutil.copytree(dojoresnode.abspath(), wwwscriptsdojo_dir.make_node("resources").abspath())
         
             if DIJIT :
                 #handling Dijit is really there
@@ -495,7 +486,7 @@ def build(bld):
                     if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
                         shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
                         if bld.env.PLATFORM == 'android' :
-                            shutil.copytree(bldscriptsdnlsnode.abspath(), assetswwwscriptsdojo_dir.make_node("nls").abspath())
+                            shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsdojo_dir.make_node("nls").abspath())
 
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
@@ -519,10 +510,10 @@ def build(bld):
                             shutil.copytree(_thimg.abspath(), bldCssThImgsNode.abspath())
 
                         if bld.env.PLATFORM == 'android' :
-                            #print assetswww_dir.make_node("css").make_node(tname).abspath()
-                            assetswwwCssThemeNode = assetswww_dir.make_node("css").make_node(tname)
-                            removeLoc(assetswwwCssThemeNode.abspath())
-                            shutil.copytree(bldCssThNode.abspath(), assetswwwCssThemeNode.abspath())
+                            #print www_dir.make_node("css").make_node(tname).abspath()
+                            wwwCssThemeNode = www_dir.make_node("css").make_node(tname)
+                            removeLoc(wwwCssThemeNode.abspath())
+                            shutil.copytree(bldCssThNode.abspath(), wwwCssThemeNode.abspath())
 
             if bld.env.PLATFORM == 'android' :
                 #TODO build and copy dojox mobile themes
@@ -569,12 +560,15 @@ def build(bld):
             if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
                 bld(rule=cp_task,
                     source=static.get_src(),
-                    target=bldnode.make_node(static.path_from(htdocs_dir))) #copy them to the build directory
+                    target=bldnode.make_node(static.path_from(htdocs_dir)),
+                    before = "androbuild_task") #copy them to the build directory
                 if bld.env.PLATFORM == 'android' :
                     #copying
+                    print "Copying " + bldnode.make_node(static.path_from(htdocs_dir)).abspath() + " to " + www_dir.make_node(static.path_from(htdocs_dir)).abspath()
                     bld(rule=cp_task,
                         source=bldnode.make_node(static.path_from(htdocs_dir)),
-                        target=assetswww_dir.make_node(static.path_from(htdocs_dir)))
+                        target=www_dir.make_node(static.path_from(htdocs_dir)),
+                        before = "androbuild_task")
 
         #Compile app src files
         jsFiles = ['*.js']
@@ -584,11 +578,13 @@ def build(bld):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
             bld(rule = cbuild_task,
                 source = js.get_src(),
-                target = bldscriptsnode.make_node(js.path_from(scripts_dir)))
+                target = bldscriptsnode.make_node(js.path_from(scripts_dir)),
+                before = "androbuild_task")
             if bld.env.PLATFORM == 'android' :
                 bld(rule = cbuild_task,
                     source = bldscriptsnode.make_node(js.path_from(scripts_dir)),
-                    target = assetswwwscripts_dir.make_node(js.path_from(scripts_dir)))
+                    target = wwwscripts_dir.make_node(js.path_from(scripts_dir)),
+                    before = "androbuild_task")
 
         #copy build task call
         cpBuild()
@@ -598,50 +594,41 @@ def build(bld):
     if bld.env.PLATFORM == 'android' : 
         android_pub_node = bld.path.find_node("publish").find_node("android")
         android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+        android_plat_node = android_proj_node.find_node("platforms").find_node("android")
         # last tuning to make it all work
         #TODO
         # building android version
-
            
         #define a cordova build task
         def androbuild_task(task):
-          src = task.inputs[0].abspath()
-          tgt = task.outputs[0].abspath()
+            src = task.inputs[0].abspath()
 
-          dgbopt = " --release "
-          if bld.options.bT == 'debug':
             dbgopt = " --debug "
-          
-          #finding relevant build script
-          buildandroid_node = None
-          if os.name == 'posix' and platform.system() == 'Linux':
-              buildandroid_node = android_proj_node.find_node("cordova").find_node("build")
-              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build not found.")
-              os.chmod(buildandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
-          elif os.name == 'nt' and platform.system() == 'Windows' :
-              buildandroid_node = android_proj_node.find_node("cordova").find_node("build.bat")
-              if  buildandroid_node is None : bld.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/build.bat not found.")
-            
-          androbuild_proc = subprocess.Popen(buildandroid_node.relpath() + dbgopt ,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True)
-          out,err = androbuild_proc.communicate()
+            if bld.options.bT == 'release':
+                dbgopt = " --release "
+           
+            #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
+            androbuild_proc = subprocess.Popen("cordova build " + dbgopt + " android",
+                cwd=android_proj_node.relpath(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = androbuild_proc.communicate()
 
-          if (androbuild_proc.returncode != 0) :
-            bld.fatal("Android Build failed. Error : \n" + err)
-          else :
-            if out is not None and out.strip() != "" :
-              print out
-            if err is not None and err.strip() != "" :
-              print err
-          return androbuild_proc.returncode
+            if (androbuild_proc.returncode != 0) :
+                bld.fatal("Android Build failed. Error : \n" + err)
+            else :
+                if out is not None and out.strip() != "" :
+                    print out
+                if err is not None and err.strip() != "" :
+                    print err
+            return androbuild_proc.returncode
 
         #defining the build task
         bld(rule = androbuild_task,
-            source = android_proj_node.make_node("build.xml"),
-            target = android_proj_node.make_node(os.path.join("ant-build",ANDROID_PROJECT + "-debug.apk")), #param to check if build is at the good location
-            always = True)
+            source = android_proj_node.make_node("config.xml"),
+            always = True,
+            name = "androbuild_task")
 
     elif bld.env.PLATFORM == 'chrome' :
             
