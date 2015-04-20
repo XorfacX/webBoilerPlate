@@ -452,6 +452,21 @@ def build(bld):
                     removeLoc(wwwscriptsdojonls_node.abspath())
                     shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsdojonls_node.abspath())
 
+                #extracting app localization resources if applicable (TODO: those files are compiled since dojo 1.10 under an app_%locale%.js filename, what should we do w it?)
+                appnls = appBuild_dir.find_node("app/nls")
+                if appnls is not None :
+                    print "Extracting App Localization resources"
+                    bldscriptsdnlsnode = bldscriptsnode.make_node("app").make_node("nls")
+                    bldscriptsdnlsnode.mkdir()
+                    #copying localization resources from the build
+                    for fname in appnls.ant_glob(["*.js", "*.js.map"]) :
+                        if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
+                            shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
+                    if bld.env.PLATFORM == 'android' :
+                        wwwscriptsappnls_node = wwwscripts_dir.make_node("app").make_node("nls")
+                        removeLoc(wwwscriptsappnls_node.abspath())
+                        shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsappnls_node.abspath())
+
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
                 if dijitbuildthemes is None : bld.fatal("Dijit themes directory was not found in build directory. Cannot continue.")
@@ -534,10 +549,8 @@ def build(bld):
                         target=www_dir.make_node(static.path_from(htdocs_dir)),
                         before = "androbuild_task")
 
-        #Compile app external src files and, if applicable, app nls files (TODO: those files are already compiled since dojo 1.10 so we should copy compiled files instead of adding them here again; also be careful that nls compilation by dojo now generate a app_%locale%.js file containing eveything, what should we do w it?)
+        #Compile app external src files
         jsFiles = ['*.js']
-        if DIJIT:
-            jsFiles.extend(['app/nls/**/*.js'])
         for js in scripts_dir.get_src().ant_glob(jsFiles):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
             bld(rule = cbuild_task,
