@@ -3,5 +3,5 @@ var dojoConfig = {
     async: 1, //AMD loader
     selectorEngine: 'css3', //will use css3 "acme" selector for fully css3 query support //http://dojotoolkit.org/reference-guide/1.10/dojo/query.html#selector-support
     waitSeconds: 4,
-    paths: { "base": "../", "app": "../app/" }
+    paths: { "base": "..", "app": "../app" }
 };

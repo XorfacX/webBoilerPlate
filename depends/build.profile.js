@@ -66,7 +66,7 @@ var profile = (function () {
             },
             "app/appC": { //APP LAYER
                 include: [
-                    "app/appC" //should include others app module. TOSET: modules defined though REQUIRE, others are loaded automatically.
+                    "app/app" //should include others app module. TOSET: modules defined though REQUIRE, others are loaded automatically.
                 ],
                 exclude: [
                     //sometimes u need to exclude duplicated dojo module from the app layer, do it here
