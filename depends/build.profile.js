@@ -48,7 +48,7 @@ var profile = (function () {
                     //TOSET: SAME selectorEngine SET IN dojoConfig
                     "dojo/selector/acme",
 
-                    //TOSET: YOUR OWN LIST OF DOJO/DOJOX/DIJIT MODULE HERE (otherwise they are added to the appC.js file)
+                    //TOSET: YOUR OWN LIST OF DOJO/DOJOX/DIJIT MODULE HERE (otherwise they are added to the app.js file)
                     "dojo/on",
                     "dojo/ready",
                     "dojo/Deferred",
@@ -64,7 +64,7 @@ var profile = (function () {
                 customBase: true,
                 boot: true
             },
-            "app/appC": { //APP LAYER
+            "app/app": { //APP LAYER
                 include: [
                     "app/app" //should include others app module. TOSET: modules defined though REQUIRE, others are loaded automatically.
                 ],
