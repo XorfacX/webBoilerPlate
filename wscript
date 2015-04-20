@@ -36,7 +36,7 @@ WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder delet
 top = '.'
 out = 'wbuild'
 jsOut = '_release' #JS build folder name
-jsBuildFiles = ['app/appC.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
+jsBuildFiles = ['app/app.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
 
 
 def options(opt):
@@ -63,20 +63,6 @@ def configure(conf):
     scriptsnode = htdocsnode.find_dir('scripts')
     if scriptsnode is None : conf.fatal("htdocs/scripts/ subfolder was not found. Cannot continue.")
 
-    # Remove a location
-    # In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
-    def removeLoc(location):
-        while 1:
-            try:
-                if os.path.exists(location):
-                    shutil.rmtree(location)
-                os.makedirs(location)
-                break
-            except:
-                pass
-
-        shutil.rmtree(location)
-
     #copying depends single files and folders cpntent
     for depend in conf.env.DEPENDS:
         dependNode = depends_dir.find_node(depend)
@@ -99,7 +85,7 @@ def configure(conf):
 
     #handling ENGINE
     if conf.env.ENGINE == "dojo":
-        if DIJIT :
+        if DIJIT and len(DIJIT_THEMES) > 0 :
             #extracting dijit themes
             dijitthemes = scriptsnode.find_node("dijit/themes")
             if dijitthemes is None : conf.fatal("dijit/themes for dijit themes was not found in build directory. Cannot continue.")
@@ -139,51 +125,40 @@ def configure(conf):
                 conf.end_msg("ok")
             #else: conf.fatal("tests/ subfolder was not found. Cannot continue.")
 
-        if conf.env.PLATFORM == 'android':
+        #if conf.env.PLATFORM == 'android':
 
-            #TODO CHECK IF WE STILL NEED MANUAL MOBILE THEME COPY
-            print ">>> TODO CHECK IF WE STILL NEED MANUAL MOBILE THEME COPY <<<"
-
-#            #extracting dojox mobile themes
-#            conf.start_msg("Extracting Dojox mobile Theme chooser" )
-#            # creating dojox folder
-#            htdocsdojoxnode = htdocsnode.make_node(os.path.dirname(dojoxmobilethemechooser.path_from(scriptsnode)))
-#            if not os.path.exists(htdocsdojoxnode.abspath()) :
-#                htdocsdojoxnode.mkdir()
-#            shutil.copy(dojoxmobilethemechooser.abspath(),htdocsnode.make_node(dojoxmobilethemechooser.path_from(scriptsnode)).abspath())
-#            conf.end_msg(htdocsnode.find_node(dojoxmobilethemechooser.path_from(scriptsnode)).relpath())
-        
-            conf.start_msg("Extracting Dojox Mobile Themes ")
-            dmblthemes_build = scriptsnode.find_node("dojox/mobile/themes")
-            if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")
-            htdocsDojoxNode = htdocsnode.make_node("dojox")
-            dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
-            removeLoc(htdocsDojoxNode.abspath()) #remove existing dojox dir
-            dmbltnode.mkdir()
-            for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
-                thdir = dmblthemes_build.find_dir(ftname)
-                if thdir is not None :
-                    thcss = thdir.find_node(ftname + ".css")
-                    if thcss is not None :
-                        thnode = dmbltnode.make_node(ftname)
-                        thnode.mkdir()
-                        if thnode is not None :
-                            #copy the css
-                            shutil.copy(thcss.abspath(), thnode.abspath())
+        ##MANUAL THEME COPY: NOT NEEDED ANYMORE DURING CONFIGURE!
+        #    conf.start_msg("Extracting Dojox Mobile Themes ")
+        #    dmblthemes_build = scriptsnode.find_node("dojox/mobile/themes")
+        #    if dmblthemes_build is None : conf.fatal("dojox/mobile/themes for dojox mobile themes was not found in build directory. Cannot continue.")
+        #    htdocsDojoxNode = htdocsnode.make_node("dojox")
+        #    dmbltnode = htdocsnode.make_node("dojox/mobile/themes")
+        #    removeLoc(htdocsDojoxNode.abspath()) #remove existing dojox dir
+        #    dmbltnode.mkdir()
+        #    for ftname in ['android','blackberry','common','custom','holodark','iphone','windows']:
+        #        thdir = dmblthemes_build.find_dir(ftname)
+        #        if thdir is not None :
+        #            thcss = thdir.find_node(ftname + ".css")
+        #            if thcss is not None :
+        #                thnode = dmbltnode.make_node(ftname)
+        #                thnode.mkdir()
+        #                if thnode is not None :
+        #                    #copy the css
+        #                    shutil.copy(thcss.abspath(), thnode.abspath())
                 
-                            #copy the images
-                            thimg = thdir.find_dir("images")
-                            if thimg is not None :
-                                thimagesnode = thnode.make_node("images")
-                                removeLoc(thimagesnode.abspath()) #remove existing images dir
-                                shutil.copytree(thimg.abspath(), thimagesnode.abspath())
+        #                    #copy the images
+        #                    thimg = thdir.find_dir("images")
+        #                    if thimg is not None :
+        #                        thimagesnode = thnode.make_node("images")
+        #                        removeLoc(thimagesnode.abspath()) #remove existing images dir
+        #                        shutil.copytree(thimg.abspath(), thimagesnode.abspath())
                   
-                            #ipad specific from iphone theme
-                            ipadcss = thdir.find_node("ipad.css")
-                            if ipadcss is not None :
-                                shutil.copy(ipadcss.abspath(), thnode.abspath())
+        #                    #ipad specific from iphone theme
+        #                    ipadcss = thdir.find_node("ipad.css")
+        #                    if ipadcss is not None :
+        #                        shutil.copy(ipadcss.abspath(), thnode.abspath())
           
-            conf.end_msg("ok")
+        #    conf.end_msg("ok")
 
     else: # no need of dojo
         pass
@@ -291,20 +266,6 @@ def build(bld):
     else :
         #print depends_dir.abspath()
         bld.recurse('depends')
-    
-    # Remove a location
-    # In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
-    def removeLoc(location):
-        while 1:
-            try:
-                if os.path.exists(location):
-                    shutil.rmtree(location)
-                os.makedirs(location)
-                break
-            except:
-                pass
-
-        shutil.rmtree(location)
 
     #define a portable copy task
     #WARNING when using this task files are not copied each build but only the FIRST TIME. if you need to copy them again, you need to do a full distclean before.
@@ -426,12 +387,11 @@ def build(bld):
 
                         bld(rule = appendToFile_task,
                             source = platfEnvBuildNode,
-                            target = appBuild_dir.find_node('app/appC.js'),  #TODO 'appC.js' is hard defined, fixed it
+                            target = appBuild_dir.find_node('app/app.js'),  #TODO 'app.js' is hard defined, fixed it
                             after = "buildPlatfEnv_task",
                             before = "cpBuild")
 
             else :
-                bld.end_msg("failed","RED")
                 bld.fatal("Command Output : \n" + out + "Error :\n" + err)
 
         def cpBuild():
@@ -468,7 +428,9 @@ def build(bld):
                 removeLoc(scriptsresnode.abspath())
                 shutil.copytree(dojoresnode.abspath(), scriptsresnode.abspath())
                 if bld.env.PLATFORM == 'android' :
-                    shutil.copytree(dojoresnode.abspath(), wwwscriptsdojo_dir.make_node("resources").abspath())
+                    wwwscriptsdojores_node = wwwscriptsdojo_dir.make_node("resources")
+                    removeLoc(wwwscriptsdojores_node.abspath())
+                    shutil.copytree(dojoresnode.abspath(), wwwscriptsdojores_node.abspath())
         
             if DIJIT :
                 #handling Dijit is really there
@@ -485,8 +447,10 @@ def build(bld):
                 for fname in dojonls.ant_glob("dojo_*") :
                     if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
                         shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
-                        if bld.env.PLATFORM == 'android' :
-                            shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsdojo_dir.make_node("nls").abspath())
+                if bld.env.PLATFORM == 'android' :
+                    wwwscriptsdojonls_node = wwwscriptsdojo_dir.make_node("nls")
+                    removeLoc(wwwscriptsdojonls_node.abspath())
+                    shutil.copytree(bldscriptsdnlsnode.abspath(), wwwscriptsdojonls_node.abspath())
 
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
@@ -570,10 +534,10 @@ def build(bld):
                         target=www_dir.make_node(static.path_from(htdocs_dir)),
                         before = "androbuild_task")
 
-        #Compile app src files
+        #Compile app external src files and, if applicable, app nls files (TODO: those files are already compiled since dojo 1.10 so we should copy compiled files instead of adding them here again; also be careful that nls compilation by dojo now generate a app_%locale%.js file containing eveything, what should we do w it?)
         jsFiles = ['*.js']
         if DIJIT:
-            jsFiles.extend(['nls/**/*.js'])
+            jsFiles.extend(['app/nls/**/*.js'])
         for js in scripts_dir.get_src().ant_glob(jsFiles):
             #print bldscriptsnode.make_node(js.path_from(scripts_dir)).abspath()
             bld(rule = cbuild_task,
@@ -844,4 +808,17 @@ for x in 'chrome owa'.split():
     cmd = name + '_' + x
     fun = name + '_' + x
     variant = x
+    
+# Remove a location
+# In order to be sure it's done, we loop until we can actually recreate it than delete it on last time
+def removeLoc(location):
+    while 1:
+        try:
+            if os.path.exists(location):
+                shutil.rmtree(location)
+            os.makedirs(location)
+            break
+        except:
+            pass
 
+    shutil.rmtree(location)
