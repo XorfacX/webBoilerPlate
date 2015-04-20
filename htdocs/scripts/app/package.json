@@ -15,12 +15,8 @@
             "email": "xorfacx@fairydwarves.com"
         }
     ],
-    "bugs": "http://www.hostedredmine.com/projects/fairydwarves_05/issues",
-    "licenses": [
-        {
-            "type": "Apache License Version 2.0"
-        }
-    ],
+    "bugs": { "url": "http://www.hostedredmine.com/projects/fairydwarves_05/issues" },
+    "license": "Apache-2.0",
 
     "repository": {
         "type": "git",
