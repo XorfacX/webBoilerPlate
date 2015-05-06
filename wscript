@@ -31,12 +31,12 @@ DIJIT_THEMES = ['nihilo'] #set the list of dijit themes we want to build
 
 BUILDTYPES = 'debug release'
 ENV_FN = 'Environment.js' #platform env file
-WINDOWS_SLEEP_DURATION = 0.1 #used on MS windows platforms to allow folder deletion to occur
 
 top = '.'
 out = 'wbuild'
 jsOut = '_release' #JS build folder name
 jsBuildFiles = ['app/app.js', 'dojo/dojo.js'] #results of JS build: add other built files you want to copy here
+cssBuildFiles = ['css/general.css'] #results of CSS build: add other built files you want to copy here
 
 
 def options(opt):
@@ -385,7 +385,7 @@ def build(bld):
             dojobuildnode = appBuild_dir.find_dir('dojo')
             if dojobuildnode is None : bld.fatal("Build folder was not found. Cannot continue. TIP: look if java is installed and in the path.")
 
-            #copy built file from build dir to wbuild keeping the structure
+            #copy built file (js + css) from build dir to wbuild keeping the structure
             if bld.options.bT == 'debug': #on debug mode we also copy map and uncompressed files
                 jsBuildFilesExt = []
                 for jsBuildFile in jsBuildFiles:
@@ -396,6 +396,13 @@ def build(bld):
                 bld(rule = cp_task,
                     source = jsBuildFile.get_src(),
                     target = bldnode.find_node('scripts').make_node(jsBuildFile.path_from(appBuild_dir)),
+                    after = "buildApp",
+                    before = "AppBuildToCordovaCopy_task") #copy them to the build directory
+            for cssBuildFile in appBuild_dir.get_src().ant_glob(cssBuildFiles): #warning in case a file defined in cssBuildFiles doesnt exists, it will simply be ignore and no message will appear
+                print "Extracting " + cssBuildFile.get_src().relpath() + " to " + bldnode.make_node(cssBuildFile.path_from(appBuild_dir)).abspath()
+                bld(rule = cp_task,
+                    source = cssBuildFile.get_src(),
+                    target = bldnode.make_node(cssBuildFile.path_from(appBuild_dir)),
                     after = "buildApp",
                     before = "AppBuildToCordovaCopy_task") #copy them to the build directory
               
@@ -489,7 +496,6 @@ def build(bld):
         #static files
         statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 'images/**/*.svg',
                    'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/.htaccess',
-                   'css/*.css',
                    'content/**/*', 'scripts/*.json',
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav', 'audio/**/*.aac',
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico']

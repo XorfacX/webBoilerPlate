@@ -30,6 +30,9 @@ var profile = (function () {
         }, {
             name: "app",
             location: dojoP + "app"
+        }, {
+            name: "css",
+            location: dojoP + "../css"
         }
         //CONTINUE THE LIST OF YOUR PACKAGE HERE
         ],
