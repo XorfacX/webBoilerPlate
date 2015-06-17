@@ -432,15 +432,18 @@ def build(bld):
                         shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
 
                 #extracting app localization resources if applicable (TODO: those files are compiled since dojo 1.10 under an app_%locale%.js filename, what should we do w it?)
-                appnls = appBuild_dir.find_node("app/nls")
+                appnls = appBuild_dir.find_node("app/nls/")
                 if appnls is not None :
                     print "Extracting App Localization resources"
                     bldscriptsdnlsnode = bldscriptsnode.make_node("app").make_node("nls")
                     bldscriptsdnlsnode.mkdir()
                     #copying localization resources from the build
-                    for fname in appnls.ant_glob(["*.js", "*.js.map"]) :
+                    for fname in appnls.ant_glob(["**/*"]) :
                         if bld.options.bT == 'debug' or (bld.options.bT != 'debug' and fname.relpath().find("uncompressed.js") == -1 and fname.relpath().find("js.map") == -1) :
-                            shutil.copy(fname.abspath(), bldscriptsdnlsnode.abspath())
+                            bld(rule=cp_task,
+                                source=fname.get_src(),
+                                target=bldscriptsdnlsnode.make_node(fname.path_from(appnls)),
+                                before = "AppBuildToCordovaCopy_task")
                     
                 #copy built dijit Theme into css
                 dijitbuildthemes = dijitbuildnode.find_node("themes")
@@ -684,18 +687,11 @@ def run(ctx): # this is a buildcontext
     android_pub_node = ctx.path.find_node("publish").find_node("android")
     android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
         
-    if os.name == 'posix' and platform.system() == 'Linux':
-        runandroid_node = android_proj_node.find_node("cordova").find_node("run")
-        if runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run not found.")
-        os.chmod(runandroid_node.abspath(),stat.S_IXUSR | stat.S_IRUSR)
-    elif os.name == 'nt' and platform.system() == 'Windows' :
-        runandroid_node = android_proj_node.find_node("cordova").find_node("run.bat")
-        if  runandroid_node is None : ctx.fatal("ERROR : " + android_proj_node.relpath() + "/cordova/run.bat not found.")
-            
-    androrun_proc = subprocess.Popen(runandroid_node.relpath(),
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE,
-      shell=True)
+    androrun_proc = subprocess.Popen("cordova run android",
+        cwd=android_proj_node.relpath(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True)
     out,err = androrun_proc.communicate()
 
     if (androrun_proc.returncode != 0) :
