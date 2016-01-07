@@ -1,19 +1,19 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.fairydwarves.poker_study" version="$version" android-versionCode="$androVersion" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <!-- THIS IS WORKING W CORDOVA 5.1.1 -->
+<widget id="com.fairydwarves.webboilerplate" version="1.127" android-versionCode="1127" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <!-- THIS IS WORKING W CORDOVA 5.4.1 -->
 
-    <name>Poker Study</name>
+    <name>WebBoilerPlate</name>
 
-    <!-- TODO: Finish description -->
     <description>
-        Poker Study.
+        The project aim is to be the root of all web project.
+        It contains the structure and scripts design to start a project with a proper configuration.
     </description>
 
     <author email="contact@fairydwarves.com" href="http://fairydwarves.com">
         The FairyDwarves
     </author>
 
-    <content src="FD_Poker.html" />
+    <content src="index.html" />
 
     <!-- Domain whitelist: applies to top-level navigations only + on Android applies to iframes for non-http(s) schemes -->
     <!-- Also need CSP for android in index.html -->
@@ -22,7 +22,6 @@
     <access origin="http://fairydwarves.com/" />
     <access origin="https://*.fairydwarves.com/" />
     <access origin="http://*.fairydwarves.com/" />
-    <access origin="https://ssl.1and1.fr/secure.fairydwarves.com/" />
     <access origin="https://ssl.google-analytics.com" />
     <access origin="https://*.google.com" />
     <access origin="http://*.google.com" />
