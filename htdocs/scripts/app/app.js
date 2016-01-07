@@ -1,5 +1,5 @@
 /**@license
- * Copyright (c) 2013-2015, XorfacX - FairyDwarves
+ * Copyright (c) 2013-2016, XorfacX - FairyDwarves
  * Please report to LICENSE.md file.
  */
 
@@ -13,6 +13,7 @@ define([
     'dojo/_base/lang',
     'dojo/_base/declare',
     "dojo/on",
+    "dojo/touch",
     "dojo/ready",
     "dojo/Deferred",
     "app/system",
@@ -20,7 +21,7 @@ define([
     "app/appV",
     "app/sound",
     "app/Environment"
-], function (lang, declare, on, ready, Deferred, system, model, view, appSound) {
+], function (lang, declare, on, touch, ready, Deferred, system, model, view, appSound) {
 
     /** @private */
     var context, screenTO = 2000; //screenTO == sum of transition duration defined inside css for #title and #logo
@@ -64,7 +65,7 @@ define([
                     });
 
                     var to = setTimeout(function () {
-                        context._Title2Logo(aV, onSig); //TODO: fix, CANT use on.emit
+                        context._Title2Logo(aV, onSig); //CANT use on.emit ...
                     }, screenTO);
                 } else { //to display directly a specific node
                     this._launch(aV, forcedNode);
@@ -82,10 +83,10 @@ define([
          */
         _Title2Logo: function (aV, _signal) {
             if (_signal) {
-                if (typeof _signal.remove == "function") { //remove event if called through setTimeout
+                if (typeof _signal.remove == "function") { //remove event if called through dojo.on event
                     _signal.remove();
                 } else {
-                    clearTimeout(_signal); //cleartimeout if called through on event
+                    clearTimeout(_signal); //clearTimeout if called through setTimeout
                 }
             }
 
@@ -142,8 +143,13 @@ define([
             //TOSET: APP CODE GOES HERE
 
             this.view.reset();
-            on(document, "touched, click", lang.hitch(this, function (event) {
+            on(document, touch.release, lang.hitch(this, function (event) {
                 var res = "App model says: " + this.model.get();
+                console.log(res);
+                this.view.display(res);
+            }));
+            on(document, "backbutton", lang.hitch(this, function (event) {
+                var res = "back btn pressed";
                 console.log(res);
                 this.view.display(res);
             }));
