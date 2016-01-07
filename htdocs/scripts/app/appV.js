@@ -41,12 +41,10 @@ define([
         * @return {object} this, for chaining
         */
         showTitle: function (title) {
-            domClass.toggle(appView.containerNode, "tablelike");
-            domConstruct.create("div", { id: "titlePane", "class": "celllike" }, appView.containerNode);
-            domConstruct.create("div", { id: "title", innerHTML: title }, "titlePane");
+            domConstruct.create("div", { id: "title", innerHTML: title }, appView.containerNode);
             setTimeout(function () {
                 domStyle.set("title", { opacity: "0.01" });
-            }, 0);
+            }, 10);
             appView.startup();
             return this;
         },
@@ -56,8 +54,7 @@ define([
         * @return {object} this, for chaining
         */
         hideTitle: function () {
-            domClass.toggle(appView.containerNode, "tablelike");
-            domConstruct.destroy("titlePane");
+            domConstruct.destroy("title");
             return this;
         },
 
@@ -67,12 +64,10 @@ define([
         * @return {object} this, for chaining
         */
         showLogo: function () {
-            domClass.toggle(appView.containerNode, "tablelike");
-            domConstruct.create("div", { id: "logoPane", "class": "celllike" }, appView.containerNode);
-            domConstruct.create("div", { id: "logo" }, "logoPane");
+            domConstruct.create("div", { id: "logo" }, appView.containerNode);
             setTimeout(function () {
                 domStyle.set("logo", { opacity: "0.01" });
-            }, 0);
+            }, 10);
             appView.startup();
             return this;
         },
@@ -82,8 +77,7 @@ define([
         * @return {object} this, for chaining
         */
         hideLogo: function () {
-            domClass.remove(appView.containerNode, "tablelike");
-            domConstruct.destroy("logoPane");
+            domConstruct.destroy("logo");
             return this;
         },
 

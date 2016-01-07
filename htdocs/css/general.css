@@ -24,16 +24,17 @@ body {
     margin: 0 auto;
     background: transparent no-repeat 50% 50%;
     /*position:fixed !important;*/
-    max-width: 640px;
-    width: 640px;
+    max-width: 1440px;
+    /*width: 640px;*/
     left: auto;
-    font-size: 1.7em;
+    font-size: 9vmin;
+    line-height: 100%;
     background-size: 100% 100%;
 }
 
 .mblScrollableViewContainer {
     min-height: 100%;
-    position:relative !important; /*TOSET: remove this when layout properly set */
+    margin-top: 0 !important;
     /*height:100%   --> this will bug the ScrollableView capacities, DONT USE height on this element at all !!*/
 }
 
@@ -57,17 +58,30 @@ body {
     font-weight: bolder;
     text-transform: capitalize;
     color: white;
+    line-height: 100%;
 }
 
-    #title:first-letter {
+   #title:first-letter {
     }
 
 #logo {
     background: transparent url('../images/FD_logo.png') no-repeat 50% 50%;
     height: 175px;
+    width: 162px;
 }
 
 #title, #logo {
     opacity: 1;
-    -webkit-transition: opacity 4000ms ease-in 6000ms;
+    -webkit-transition: opacity 1000ms ease-in 1000ms;
+    -moz-transition: opacity 1000ms ease-in 1000ms;
+    -o-transition: opacity 1000ms ease-in 1000ms;
+    transition: opacity 1000ms ease-in 1000ms;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -moz-transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+    -o-transform: translate(-50%,-50%);
+    -webkit-transform: translate(-50%,-50%);
+    transform: translate(-50%,-50%);
 }
