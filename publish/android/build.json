@@ -1,0 +1,8 @@
+{
+     "android": {
+         "release": {
+             "keystore": "../webBP.keystore",
+             "alias": "FairyDwarves"
+         }
+     }
+ }

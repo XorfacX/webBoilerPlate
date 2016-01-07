@@ -409,11 +409,13 @@ def build(bld):
                    'content/**/*', 'scripts/*.json',
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav', 'audio/**/*.aac',
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico']
+        print 'Copying static files from ' + htdocs_dir.get_src().relpath() + ' into wbuild'
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
             if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
                 bld(rule=cp_task,
                     source=static.get_src(),
                     target=bldnode.make_node(static.path_from(htdocs_dir)),
+                    name="staticFileCopy_task",
                     before = "AppBuildToCordovaCopy_task") #copy them to the build directory
                 
         #Compile app external src files
@@ -506,21 +508,22 @@ def build(bld):
                 shutil.copy(buildJsonNode.abspath(),cordova_proj_node.abspath())
 
             #TODO: when and how do we clean platforms/%PLATFORM%/ant-build from older and other build type builds ???
-            androbuild_proc = subprocess.Popen("cordova build " + dbgopt + " android" + (" --buildConfig=build.json" if (buildJsonNode is not None) else ""),
+            cordovabuild_proc = subprocess.Popen("cordova build " + dbgopt + " " + bld.env.PLATFORM + (" --buildConfig=build.json" if (buildJsonNode is not None) else ""),
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=True)
-            out,err = androbuild_proc.communicate()
+            out,err = cordovabuild_proc.communicate()
 
-            if (androbuild_proc.returncode != 0) :
-                bld.fatal("Android Build failed. Error : \n" + err)
+            if (cordovabuild_proc.returncode != 0) :
+                bld.fatal("Cordova " + bld.env.PLATFORM + " build failed. Error : \n" + err)
             else :
+                print "Cordova " + bld.env.PLATFORM + " build Success"
                 if out is not None and out.strip() != "" :
                     print out
                 if err is not None and err.strip() != "" :
                     print err
-            return androbuild_proc.returncode
+            return cordovabuild_proc.returncode
         
 
         #folders checks/setup
@@ -558,12 +561,28 @@ def build(bld):
         #TODO : this should be handled by clean(invert of build) or distclean ( invert of configure )
         
         #copying publish package files #TODO: maybe this (icons, splashScreens copy to wbuild) is not needed because those files seems to be added to the built apk anyway TBT
+        print 'Copying publish package files from ' + android_pub_node.get_src().relpath() + ' into wbuild'
         for pkgFile in android_pub_node.get_src().ant_glob(['icons/**/*','splashScreens/**/*']): # find them
             bld(rule=cp_task,
                 source=pkgFile.get_src(),
                 target=bldnode.make_node(pkgFile.path_from(android_pub_node)),
                 name = "pkgFilesCopy_task",
+                after = "staticFileCopy_task",
                 before = "AppBuildToCordovaCopy_task") #copy them to the build directory
+        
+        #merging publish package files
+        android_pub_merge_node = android_pub_node.find_node("toMerge")
+        if android_pub_merge_node is not None:
+            print 'Merging files from ' + android_pub_merge_node.relpath() + ' into wbuild'
+            for pkgFile in android_pub_merge_node.get_src().ant_glob(['**/*']): # find them
+                bld(rule=cp_task,
+                    source=pkgFile.get_src(),
+                    target=bldnode.make_node(pkgFile.path_from(android_pub_merge_node)),
+                    name = "pkgFilesMerge_task",
+                    after = "staticFileCopy_task",
+                    before = "AppBuildToCordovaCopy_task") #copy them to the build directory
+        else:
+            print 'android_pub_merge_node empty'
 
         #cordova platform: copy wbuild, update then build
         bld(rule = appbuildtocordovacopy_task,

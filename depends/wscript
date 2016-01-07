@@ -16,6 +16,7 @@ ENGINES = 'dojo'
 PLATFORMS = 'android local chrome owa facebook' #list of supported platforms
 MARKDOWN = 0 #enable or disable markdown parser dependency
 LZSTRING = 0 #enable or disable lz-string dependency
+VUNIT_BUGGYFILL = 0 #enable or disable viewport unit buggyfill
 
 
 #> http://dojotoolkit.org/
@@ -31,11 +32,17 @@ MARKDOWN_PARSER_URL = "https://raw.githubusercontent.com/FairyDwarves/pagedown/m
 
 #> http://pieroxy.net/blog/pages/lz-string/index.html
 LZSTRING_FN = "lz-string-1.3.3.js"
-LZSTRING_URL = "https://raw.github.com/XorfacX/lz-string/master/libs/" + LZSTRING_FN
+LZSTRING_URL = "https://raw.githubusercontent.com/FairyDwarves/lz-string/master/libs/" + LZSTRING_FN
+
+#> https://github.com/rodneyrehm/viewport-units-buggyfill
+VUNIT_BUGGYFILL_FNS = ["viewport-units-buggyfill.js", "viewport-units-buggyfill.hacks.js"]
+VUNIT_BUGGYFILL_URI = "https://raw.githubusercontent.com/rodneyrehm/viewport-units-buggyfill/master/"
 
 #list of tools used by the script.
 #Add any tools needed in order to check for his existence
 tools = {
+}
+androidTools = {
     "npm" : {"action" : ""},
     "cordova" : {"action" : ""},
 }
@@ -162,6 +169,8 @@ def configure(conf):
     ### End of MACROS ###
 
     # check tools
+    if conf.env.PLATFORM == 'android':
+        tools.update(androidTools)
     for tool in tools:
         if not findTool(tool):
             if "cordova" == tool :
@@ -190,6 +199,12 @@ def configure(conf):
         #download LZ-String
         DL_web(LZSTRING_URL,LZSTRING_FN)
         conf.env.DEPENDS.append(LZSTRING_FN)
+
+    if VUNIT_BUGGYFILL :
+        #download viewport units buggyfill
+        for toDldFN in VUNIT_BUGGYFILL_FNS :
+            DL_web(VUNIT_BUGGYFILL_URI + toDldFN, toDldFN)
+            conf.env.DEPENDS.append(toDldFN)
     
     if conf.env.PLATFORM == 'android' :
     
@@ -259,7 +274,7 @@ def configure(conf):
         #checking all is there
         conf.start_msg("Android build platform setup: ")
         if detect_android() and detect_javac() and detect_ant():
-            conf.end_msg("OK","GREEN")
+            conf.end_msg("ok","GREEN")
         else:
             conf.end_msg("failed","RED")
         

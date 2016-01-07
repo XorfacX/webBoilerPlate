@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.fairydwarves.poker_study" version="$version" android-versionCode="$androVersion" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <!-- THIS IS WORKING W CORDOVA 5.1.1 -->
+
+    <name>Poker Study</name>
+
+    <!-- TODO: Finish description -->
+    <description>
+        Poker Study.
+    </description>
+
+    <author email="contact@fairydwarves.com" href="http://fairydwarves.com">
+        The FairyDwarves
+    </author>
+
+    <content src="FD_Poker.html" />
+
+    <!-- Domain whitelist: applies to top-level navigations only + on Android applies to iframes for non-http(s) schemes -->
+    <!-- Also need CSP for android in index.html -->
+    <!-- ATM we don't need anything
+    <access origin="https://fairydwarves.com/" />
+    <access origin="http://fairydwarves.com/" />
+    <access origin="https://*.fairydwarves.com/" />
+    <access origin="http://*.fairydwarves.com/" />
+    <access origin="https://ssl.1and1.fr/secure.fairydwarves.com/" />
+    <access origin="https://ssl.google-analytics.com" />
+    <access origin="https://*.google.com" />
+    <access origin="http://*.google.com" />
+    <access origin="https://*.facebook.com" />
+    <access origin="http://*.facebook.com" />
+    -->
+
+    <!--  Plugin domains whitelist, https://github.com/apache/cordova-plugin-whitelist#intent-whitelist -->
+    <!-- 
+    <plugin name="cordova-plugin-whitelist" version="1" />
+    <  href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+    </platform>
+    -->
+
+    <!-- TODO: How To Handle permissions ?? -->
+
+    <preference name="Fullscreen" value="true" />  <!-- be sure it's full screen -->
+    <preference name="Orientation" value="landscape" /> <!-- force landscape -->
+    <preference name="HideKeyboardFormAccessoryBar" value="true"/> <!-- Android/blackberry, hide keyboard input nav bar-->
+
+    <icon src="../icons/default.png" /> <!-- default icon (we start from Cordova project) -->
+
+    <!-- Android specifics -->
+    <platform name="android">
+        <!-- icons (we start from Cordova project) -->
+        <icon src="../icons/ldpi.png" density="ldpi" />
+        <icon src="../icons/mdpi.png" density="mdpi" />
+        <icon src="../icons/hdpi.png" density="hdpi" />
+        <icon src="../icons/xhdpi.png" density="xhdpi" />
+
+        <!-- splashscreens (we start from Cordova project) -->
+        <splash src="../splashScreens/portrait-hdpi.png" density="port-hdpi"/>
+        <splash src="../splashScreens/portrait-ldpi.png" density="port-ldpi"/>
+        <splash src="../splashScreens/portrait-mdpi.png" density="port-mdpi"/>
+        <splash src="../splashScreens/portrait-xhdpi.png" density="port-xhdpi"/>
+    </platform>
+    <!-- END Android specifics -->
+
+    <!-- iOS
+    <platform name="ios">
+    </platform>
+    -->
+
+</widget>
