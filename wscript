@@ -105,15 +105,15 @@ def configure(conf):
 
     #handling PLATFORM
     if conf.env.PLATFORM == 'android' :
-        android_pub_node = conf.path.find_node("publish").find_node("android")
-        if android_pub_node is None : conf.fatal("Cannot find publish/android path")
+        platform_pub_node = conf.path.find_node("publish").find_node("android")
+        if platform_pub_node is None : conf.fatal("Cannot find publish/android path")
 
-        android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+        android_proj_node = platform_pub_node.find_node(ANDROID_PROJECT)
         if android_proj_node is None :
             conf.end_msg("failed","RED")
 
             conf.start_msg("Creating Cordova Project")
-            cordova_create_proc = subprocess.Popen("cordova create \"" + os.path.join(android_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + "\" \"" + ANDROID_PROJECT + "\"",
+            cordova_create_proc = subprocess.Popen("cordova create \"" + os.path.join(platform_pub_node.path_from(conf.path),ANDROID_PROJECT) + "\" \"" + ANDROID_PACKAGE + "\" \"" + ANDROID_PROJECT + "\"",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=True)
@@ -121,7 +121,7 @@ def configure(conf):
             if cordova_create_proc.returncode == 0 :
                 conf.to_log(out)
                 conf.to_log(err)
-                android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+                android_proj_node = platform_pub_node.find_node(ANDROID_PROJECT)
                 if android_proj_node is None : conf.fatal(ANDROID_PROJECT + " was not found")
                 conf.end_msg(android_proj_node.relpath(),"GREEN")
             else :
@@ -161,10 +161,6 @@ def build(bld):
     bldnode = bld.path.get_bld()
     bldscriptsnode = bldnode.make_node('scripts')
     bldscriptsnode.mkdir()
-
-    #platform specifics
-    chronode = None
-    fbnode = None
 
     #validate option list
     if bld.options.bT not in BUILDTYPES :
@@ -235,18 +231,15 @@ def build(bld):
         version_file.close()
         return 0
 
-    if bld.env.PLATFORM == 'chrome' :
-        # find chrome_store folder
-        chronode = bld.path.get_src().find_dir("publish/chrome_store")
-        if chronode is None : # TODO : setup basic chrome_store structure
-            bld.fatal("chrome_store not found")
+    #platform specifics
+    platform_pub_node = None
+    if bld.env.PLATFORM == 'chrome' or bld.env.PLATFORM == 'facebook' or bld.env.PLATFORM == 'android':
+        # find platform publish folder
+        platform_folder_name = "chrome_store" if bld.env.PLATFORM == 'chrome' else bld.env.PLATFORM
+        platform_pub_node = bld.path.get_src().find_dir("publish/" + platform_folder_name)
+        if platform_pub_node is None : # TODO : setup basic publish structure
+            bld.fatal("publish/" + platform_folder_name + " not found. Plz fix!")
 
-    elif bld.env.PLATFORM == 'facebook' :
-        # find chrome_store folder
-        fbnode = bld.path.get_src().find_dir("publish/facebook")
-        if fbnode is None : # TODO : setup basic facebook structure
-            bld.fatal("fbnode not found")
-  
     if bld.env.ENGINE == "dojo" : #dojo and web js engine -> just copy files around
         #define how to build app http://livedocs.dojotoolkit.org/build/buildSystem
         def buildApp(profnode, chroEnvNode):
@@ -269,7 +262,7 @@ def build(bld):
                 appBuild_dir = scripts_dir.find_dir(jsOut)
 
                 #concat ENV_FN into build App
-                if bld.env.PLATFORM == 'chrome' or bld.env.PLATFORM == 'facebook':
+                if bld.env.PLATFORM == 'chrome' or bld.env.PLATFORM == 'facebook' or bld.env.PLATFORM == 'android':
                     if platfEnvNode is not None :
                         platfEnvBuildNode = appBuild_dir.make_node('publish/' + ENV_FN) #build into %appBuild_dir%/publish/
                         print "Building and adding platform env " + platfEnvBuildNode.relpath()
@@ -389,10 +382,8 @@ def build(bld):
         appIsBuilt = appBuild_dir is not None
 
         platfEnvNode = None
-        if bld.env.PLATFORM == 'chrome' :
-            platfEnvNode = chronode.make_node(ENV_FN) if (chronode is not None and chronode.find_node(ENV_FN) is not None) else None
-        elif bld.env.PLATFORM == 'facebook':
-            platfEnvNode = fbnode.make_node(ENV_FN) if (fbnode is not None and fbnode.find_node(ENV_FN) is not None) else None
+        if bld.env.PLATFORM == 'chrome' or bld.env.PLATFORM == 'facebook' or bld.env.PLATFORM == 'android' :
+            platfEnvNode = platform_pub_node.make_node(ENV_FN) if (platform_pub_node is not None and platform_pub_node.find_node(ENV_FN) is not None) else None
 
         if bld.options.partial:
             if not appIsBuilt:
@@ -451,7 +442,7 @@ def build(bld):
                 if err is not None and err.strip() != "" :
                     print err
                 android_plat_node = (cordova_proj_node.find_node("platforms") and cordova_proj_node.find_node("platforms").find_node("android"))
-                if android_plat_node is None : bld.fatal("platforms/" + bld.env.PLATFORM + " was not found")                
+                if android_plat_node is None : bld.fatal("platforms/" + bld.env.PLATFORM + " was not found")
             else :
                 print "Failed: Command Output : \n" + out + "Error :\n" + err
             return 0
@@ -503,7 +494,7 @@ def build(bld):
                 dbgopt = " --release "
             
             #copy build.json to cordova project
-            buildJsonNode = android_pub_node.find_node("build.json")
+            buildJsonNode = platform_pub_node.find_node("build.json")
             if buildJsonNode is not None :
                 shutil.copy(buildJsonNode.abspath(),cordova_proj_node.abspath())
 
@@ -527,20 +518,18 @@ def build(bld):
         
 
         #folders checks/setup
-        android_pub_node = bld.path.find_node("publish").find_node("android")
-        if android_pub_node is None : bld.fatal("publish/android/ subfolder was not found. Please fix.")
-        cordova_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+        cordova_proj_node = platform_pub_node.find_node(ANDROID_PROJECT)
         if cordova_proj_node is None : bld.fatal("publish/android/" + ANDROID_PROJECT + " subfolder was not found. Please run waf configure first.")
         cordovawww_dir = cordova_proj_node.find_dir('www')
 
         #Set version and copy config.xml if existing into ANDROID_PROJECT to replace default one
-        configXmlNode = android_pub_node.find_node("config.xml")
+        configXmlNode = platform_pub_node.find_node("config.xml")
         if configXmlNode is None : bld.fatal("config.xml not found")
         else :
             bld(rule=version_set,
                 always = True,
                 source = configXmlNode,
-                target = cordova_proj_node.make_node(configXmlNode.path_from(android_pub_node)),
+                target = cordova_proj_node.make_node(configXmlNode.path_from(platform_pub_node)),
                 name = "VersionSet_task",
                 before = "CordovaAddPlatform_task")
 
@@ -561,17 +550,17 @@ def build(bld):
         #TODO : this should be handled by clean(invert of build) or distclean ( invert of configure )
         
         #copying publish package files #TODO: maybe this (icons, splashScreens copy to wbuild) is not needed because those files seems to be added to the built apk anyway TBT
-        print 'Copying publish package files from ' + android_pub_node.get_src().relpath() + ' into wbuild'
-        for pkgFile in android_pub_node.get_src().ant_glob(['icons/**/*','splashScreens/**/*']): # find them
+        print 'Copying publish package files from ' + platform_pub_node.get_src().relpath() + ' into wbuild'
+        for pkgFile in platform_pub_node.get_src().ant_glob(['icons/**/*','splashScreens/**/*']): # find them
             bld(rule=cp_task,
                 source=pkgFile.get_src(),
-                target=bldnode.make_node(pkgFile.path_from(android_pub_node)),
+                target=bldnode.make_node(pkgFile.path_from(platform_pub_node)),
                 name = "pkgFilesCopy_task",
                 after = "staticFileCopy_task",
                 before = "AppBuildToCordovaCopy_task") #copy them to the build directory
         
         #merging publish package files
-        android_pub_merge_node = android_pub_node.find_node("toMerge")
+        android_pub_merge_node = platform_pub_node.find_node("toMerge")
         if android_pub_merge_node is not None:
             print 'Merging files from ' + android_pub_merge_node.relpath() + ' into wbuild'
             for pkgFile in android_pub_merge_node.get_src().ant_glob(['**/*']): # find them
@@ -606,25 +595,25 @@ def build(bld):
     elif bld.env.PLATFORM == 'chrome' :
             
         #manifest.json needed for chrome
-        mnfstnode = chronode.find_node("manifest.json")
+        mnfstnode = platform_pub_node.find_node("manifest.json")
         if mnfstnode is None : bld.fatal("manifest.json not found")
         else :
             bld(rule=version_set,
                 source = mnfstnode,
-                target = bldnode.make_node(mnfstnode.path_from(chronode)))
+                target = bldnode.make_node(mnfstnode.path_from(platform_pub_node)))
         
         #copying chrome publish files
         for cpfiles in ['_locales','ico16.png','ico128.png'] :
-            cpnode = chronode.get_src().find_node(cpfiles)
+            cpnode = platform_pub_node.get_src().find_node(cpfiles)
             if cpnode is None : bld.fatal(os.path.join(cpnode.get_src().relpath(),cpfiles) + " not found. Aborting.")
             else :
                 if os.path.isdir(cpnode.abspath()) :
-                    bld_cpnode = bldnode.make_node(cpnode.path_from(chronode))
+                    bld_cpnode = bldnode.make_node(cpnode.path_from(platform_pub_node))
                     removeLoc(bld_cpnode.abspath())
                     res = shutil.copytree(cpnode.get_src().abspath(),bld_cpnode.abspath())
                 else :
                     srccp = cpnode.get_src().abspath()
-                    tgtcp = bldnode.make_node(cpnode.path_from(chronode)).abspath()
+                    tgtcp = bldnode.make_node(cpnode.path_from(platform_pub_node)).abspath()
                     if not os.path.exists(os.path.dirname(tgtcp)) :
                         os.makedirs(os.path.dirname(tgtcp))
                     res = shutil.copy(srccp,tgtcp)
@@ -633,12 +622,12 @@ def build(bld):
     elif bld.env.PLATFORM == 'facebook' :
             
         #manifest.json needed for chrome
-        mnfstnode = fbnode.find_node("manifest.json")
+        mnfstnode = platform_pub_node.find_node("manifest.json")
         if mnfstnode is None : bld.fatal("manifest.json not found")
         else :
             bld(rule=version_set,
                 source = mnfstnode,
-                target = bldnode.make_node(mnfstnode.path_from(fbnode)))
+                target = bldnode.make_node(mnfstnode.path_from(platform_pub_node)))
 
 def doc(bld):
     """automatically generates the documentation with jsdoc"""
@@ -674,8 +663,8 @@ def run(ctx): # this is a buildcontext
   #print bldnode.abspath()
 
   if ctx.env.PLATFORM == 'android' : 
-    android_pub_node = ctx.path.find_node("publish").find_node("android")
-    android_proj_node = android_pub_node.find_node(ANDROID_PROJECT)
+    platform_pub_node = ctx.path.find_node("publish").find_node("android")
+    android_proj_node = platform_pub_node.find_node(ANDROID_PROJECT)
 
     androrun_proc = subprocess.Popen("cordova run android",
         cwd=android_proj_node.relpath(),
