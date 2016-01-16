@@ -58,7 +58,8 @@ var profile = (function () {
                     "dojo/dom-construct",
                     "dojo/dom-class",
                     "dojo/dom-style",
-                    "dojox/mobile/ScrollableView"
+                    "dojox/mobile/ScrollableView",
+                    "dojox/mobile/Audio"
 
                 ],
                 exclude: [
