@@ -1,8 +1,9 @@
-setEnvironment = function () {
-    require([
-       "dojo/_base/declare", "dojo/_base/lang", "dojo/dom", "FDGE/main"
-    ], function (declare, lang, dom, fdge) {
-        var android_env = declare(_AppEnvCreation, {
+require([
+    "dojo/_base/declare", "dojo/_base/lang"
+], function (declare, lang) {
+    setEnvironment = function () {
+
+        declare(_AppEnvCreation, {
             constructor: function () {
                 //TOSET: ANDROID specific env code goes here
                 document.addEventListener('deviceready', function () {
@@ -18,7 +19,7 @@ setEnvironment = function () {
                     }, false);
                 }, false);
             } //constructor
-        });  //declare
-        android_env();
-    });
-};
+        })();  //declare then execute
+
+    };
+});
