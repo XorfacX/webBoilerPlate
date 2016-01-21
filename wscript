@@ -399,7 +399,8 @@ def build(bld):
                    'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/.htaccess',
                    'content/**/*', 'scripts/*.json',
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav', 'audio/**/*.aac',
-                   '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico']
+                   '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico',
+                   '*.js'] #need to copy dummy js files
         print 'Copying static files from ' + htdocs_dir.get_src().relpath() + ' into wbuild'
         for static in htdocs_dir.get_src().ant_glob(statics): # find them
             if static.relpath().find(".*ignore") == -1 and static.relpath().find("dijit.css") == -1 : #ignoring file w ignore in their name, this also wont copy dir w only an ignore file like a *gitignore ALSO ignoring dijit.css file added by the configure
