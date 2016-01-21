@@ -1,8 +1,9 @@
-setEnvironment = function () {
-    require([
-       "dojo/_base/declare", "dojo/_base/lang"
-    ], function (declare, lang) {
-        var chrome_env = declare(_AppEnvCreation, {
+require([
+    "dojo/_base/declare", "dojo/_base/lang"
+], function (declare, lang) {
+
+    setEnvironment = function () {
+        declare(_AppEnvCreation, {
             constructor: function () {
                 //AppEnv specifics
                 lang.mixin(AppEnv, {
@@ -28,7 +29,7 @@ setEnvironment = function () {
                 //TOSET: platform specifics startup code
 
             } //constructor
-        });  //declare
-        chrome_env();
-    });
-};
+        })();  //declare then execute
+    };
+
+});

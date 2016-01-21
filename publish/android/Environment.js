@@ -1,10 +1,16 @@
 require([
-    "dojo/_base/declare", "dojo/_base/lang"
-], function (declare, lang) {
-    setEnvironment = function () {
+    "dojo/_base/declare", "dojo/_base/lang", "app/system"
+], function (declare, lang, system) {
 
+    setEnvironment = function () {
         declare(_AppEnvCreation, {
             constructor: function () {
+                //AppEnv specifics
+                system.mixinFull(AppEnv, {
+                    //TOSET: platform specifics AppEnv
+                    platform: 'android'
+                });
+
                 //TOSET: ANDROID specific env code goes here
                 document.addEventListener('deviceready', function () {
                     console.log("cordova loaded ok");
@@ -20,6 +26,6 @@ require([
                 }, false);
             } //constructor
         })();  //declare then execute
-
     };
+
 });
