@@ -257,7 +257,7 @@ def build(bld):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
             out,err = app_build_proc.communicate()
-            if app_build_proc.returncode == 1 : #JAVA build: ret code 0
+            if app_build_proc.returncode >= 0 : #JAVA build: ret code 0
                 if out is not None and out.strip() != "" :
                     print out
                 if err is not None and err.strip() != "" :
