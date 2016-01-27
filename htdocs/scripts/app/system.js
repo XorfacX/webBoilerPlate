@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2013-2015, XorfacX - FairyDwarves
+Copyright (c) 2013-2016, XorfacX - FairyDwarves
 All rights reserved.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,

@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2013-2015, XorfacX - FairyDwarves
+Copyright (c) 2013-2016, XorfacX - FairyDwarves
 All rights reserved.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -14,28 +14,20 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
 
     /**
     * Sound object
-    * Handle everything related to sound (sfx, music, etc)
+    * Handle everything related to sound (sfxs, music, etc)
     *
     * http://www.w3.org/wiki/HTML/Elements/audio for reference
     * Warning check http://html5test.com/ for browser audio type support 
     */
-    var sound = declare(null, {
+    return declare(null, {
         /** @private */ musicWgt: undefined,
-        /** @private */ musicFnL: ["music"], //TOSET: your list of music files here
+        /** @private @const */ defaultVol: { main: 100, music: 100, sfxs: 100, video: 100 },
+        /** @private */ musicFnL: ["music"],
         supportedFormat: {},
         evl: {},
+        _pathname: "audio/",
 
-        Main: undefined,
-        Music: undefined,
-        SFX: undefined,
-        Voice: undefined,
-        Video: undefined,
-
-        /**
-         * @constructor
-         */
-        constructor: function () {
-            //Test Support
+        /** @constructor */ constructor: function () {
             var testSupport = new mobAudio({
                 "source": [],
                 id: "supportedFormatTest"
@@ -49,89 +41,6 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             this.supportedFormat.mp3 = (node.canPlayType("audio/mp3") == "probably" || node.canPlayType("audio/mp3") == "maybe");
             this.supportedFormat.wav = (node.canPlayType("audio/wav") == "probably" || node.canPlayType("audio/wav") == "maybe");
             testSupport.destroyRecursive();
-
-            //audio module
-            var audioModule = declare(null, {
-                /**
-                 * 
-                 * @constructor
-                 */
-                constructor: function (id) {
-                    this.id = id;
-                },
-                /** @private @const */ id: undefined,
-                /** @private @const */ defaultVol: 100,
-
-                /**
-                * Set Volume
-                * @param {number} _vol, volume value
-                */
-                setVolume: function (id, _vol) {
-                    var currentVol = this.getVolume();
-                    var vol = (typeof _vol != "undefined" ? _vol : currentVol);
-
-                    var option = {}; option[(id ? id : this.id) + "Vol"] = vol;
-                    system.LS_optionSet(option);
-                },
-                /**
-                * Get Volume
-                * @return {number} the volume value
-                */
-                getVolume: function (id) {
-                    var ret = system.LS_optionGet((id ? id : this.id) + "Vol");
-                    if (typeof ret != "number") {
-                        ret = this.defaultVol;
-                    }
-                    return ret;
-                },
-                /**
-                * Set status
-                * @param {boolean} _mute, mute status
-                */
-                setMute: function (id, _mute) {
-                    var currentMute = this.getMute();
-                    var mute = (typeof _mute != "undefined" ? _mute : currentMute);
-
-                    var option = {}; option[(id ? id : this.id) + "Mute"] = mute;
-                    system.LS_optionSet(option);
-                },
-                /**
-                * Get Music status controller
-                * @return {string} the mute status
-                */
-                getMute: function (id) {
-                    var ret = system.LS_optionGet((id ? id : this.id) + "Mute");
-                    if (typeof ret != "boolean") {
-                        ret = false;
-                    }
-                    return ret;
-                }
-            });
-
-            var musicWgtModule = declare(audioModule, {
-                /**
-                * Set Volume
-                * @param {number} _vol, volume value
-                */
-                setVolume: function (id, _vol) {
-                    this.inherited(arguments); //call parent w same args
-                    musicWgt.domNode.volume = this.getVolume("Main") * this.getVolume("Music") / 10000;
-                },
-                /**
-                * Set status
-                * @param {boolean} _mute, mute status
-                */
-                setMute: function (id, _mute) {
-                    this.inherited(arguments); //call parent w same args
-                    !this.getMute("Main") && !this.getMute("Music") ? musicWgt.domNode.play() : musicWgt.domNode.pause();
-                }
-            });
-
-            this.Main = new musicWgtModule("Main");
-            this.Music = new musicWgtModule("Music");
-            this.SFX = new audioModule("SFX");
-            this.Video = new audioModule("Video");
-            this.Voice = new audioModule("Voice");
         },
 
         /**
@@ -139,12 +48,12 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         */
         init: function (LSKey) {
             try {
-                this.LSKey = LSKey; //store the LocalStorage Key for easier access if we need it
+                this.LSKey = LSKey; //store the LocalStorage Key for easier access
 
                 //music widget creation
-                musicWgt = new mobAudio({
+                this.musicWgt = new mobAudio({
                     "source": [
-                        { src: "audio/" + this.musicFnL[0] + ".ogg", type: "audio/ogg" } //only one song for now
+                        { src: this._pathname + this.musicFnL[0] + ".ogg", type: "audio/ogg" } //only one song for now
                         //alternative sources
                         //   { src: "audio/music.mp3", type: "audio/mpeg" },
                         //   { src: "audio/music.wav", type: "audio/wav" }
@@ -156,20 +65,38 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                     //"width": 0,
                     // "height": 0
                 }).placeAt(win.body());
-                musicWgt.startup();
+                this.musicWgt.startup();
+
+                /**
+                 * To be inherited
+                 * TODO: not good practice to extend original object i suppose!!
+                 */
+                this.musicWgt.getVolume = function () {
+                    return this.domNode.volume;
+                },
+                this.musicWgt.setVolume = function (newVol) {
+                    this.domNode.volume = newVol;
+                },
+                this.musicWgt.play = function () {
+                    this.domNode.play();
+                },
+               this.musicWgt.pause = function () {
+                    this.domNode.pause();
+                },
+                this.musicWgt.stop = function () {
+                    this.domNode.stop();
+                },
+               this.musicWgt.release = function () {
+                };
 
                 //initial Volumes
-                this.setVolume("Main");
-                this.setVolume("Music");
-                this.setVolume("SFX");
-                this.setVolume("Voice");
-                this.setVolume("Video");
+                this.setMainVolume();
+                this.setMusicVolume();
+                this.setSFXsVolume();
 
                 //initial Mutes (music is handled by app constructor)
-                this.setMute("Main");
-                this.setMute("SFX");
-                this.setMute("Voice", true);
-                this.setMute("Video", true);
+                this.setMainMute();
+                this.setSFXsMute();
 
             } catch (error) {
                 console.log(error);
@@ -177,41 +104,138 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         },
 
         /**
-        * Set Volume
+        * Set Music Volume controller
         * @param {number} _vol, volume value
         */
-        setVolume: function (id, _vol) {
-            if (this.hasOwnProperty(id)) {
-                this[id].setVolume(id, _vol);
-            }
+        setMusicVolume: function (_vol) {
+            var currentVol = this.getMusicVolume();
+            var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.main));
+
+            system.LS_optionSet(this.LSKey, { "MucicVol": vol });
+            this.musicWgt.setVolume(this.getMainVolume() * vol / 10000);
         },
         /**
-        * Get Volume
+        * Get Music Volume controller
         * @return {number} the volume value
         */
-        getVolume: function (id) {
-            if (this.hasOwnProperty(id)) {
-                return this[id].getVolume(id);
+        getMusicVolume: function () {
+            var ret = system.LS_optionGet(this.LSKey, "MucicVol");
+            if (typeof ret != "number") {
+                ret = this.defaultVol.music;
             }
+            return ret;
         },
         /**
-        * Set status
+        * Set Music status controller
         * @param {boolean} _mute, mute status
         */
-        setMute: function (id, _mute) {
-            if (this.hasOwnProperty(id)) {
-                this[id].setMute(id, _mute);
-            }
+        setMusicMute: function (_mute) {
+            var currentMute = this.getMusicMute();
+            var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
+
+            system.LS_optionSet(this.LSKey, { "MusicMute": mute });
+            !mute && !this.getMainMute() ? this.musicWgt.play() : this.musicWgt.pause();
         },
         /**
         * Get Music status controller
         * @return {string} the mute status
         */
-        getMute: function (id) {
-            if (this.hasOwnProperty(id)) {
-                return this[id].getMute(id);
+        getMusicMute: function () {
+            var ret = system.LS_optionGet(this.LSKey, "MusicMute");
+            if (typeof ret != "boolean") {
+                ret = false;
             }
+            return ret;
         },
+
+        /**
+        * Set SFXs Volume controller
+        * @param {number} _vol, volume value
+        */
+        setSFXsVolume: function (_vol) {
+            var currentVol = this.getSFXsVolume();
+            var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.sfxs));
+
+            system.LS_optionSet(this.LSKey, { "SFXsVol": vol });
+        },
+        /**
+        * Get SFXs Volume controller
+        * @return {number} the volume value
+        */
+        getSFXsVolume: function () {
+            var ret = system.LS_optionGet(this.LSKey, "SFXsVol");
+            if (typeof ret != "number") {
+                ret = this.defaultVol.sfxs;
+            }
+            return ret;
+        },
+        /**
+        * Set SFXs status controller
+        * @param {boolean} _mute, mute status
+        */
+        setSFXsMute: function (_mute) {
+            var currentMute = this.getSFXsMute();
+            var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
+
+            system.LS_optionSet(this.LSKey, { "SFXsMute": mute });
+        },
+        /**
+        * Get SFXs status controller
+        * @return {string} the mute status
+        */
+        getSFXsMute: function () {
+            var ret = system.LS_optionGet(this.LSKey, "SFXsMute");
+            if (typeof ret != "boolean") {
+                ret = false;
+            }
+            return ret;
+        },
+
+        /**
+        * Set Main Volume controller
+        * @param {number} _vol, volume value
+        */
+        setMainVolume: function (_vol) {
+            var currentVol = this.getMainVolume();
+            var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.main));
+
+            system.LS_optionSet(this.LSKey, { "MainVol": vol });
+            this.musicWgt.setVolume(this.getMusicVolume() * vol / 10000);
+        },
+        /**
+        * Get Main Volume controller
+        * @return {number} the volume value
+        */
+        getMainVolume: function () {
+            var ret = system.LS_optionGet(this.LSKey, "MainVol");
+            if (typeof ret != "number") {
+                ret = this.defaultVol.main;
+            }
+            return ret;
+        },
+        /**
+        * Set Main status controller
+        * @param {boolean} _mute, mute status
+        */
+        setMainMute: function (_mute) {
+            var currentMute = this.getMainMute();
+            var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
+
+            system.LS_optionSet(this.LSKey, { "MainMute": mute });
+            !mute && !this.getMusicMute() ? this.musicWgt.play() : this.musicWgt.pause(); //handle music
+        },
+        /**
+        * Get Main status controller
+        * @return {string} the mute status
+        */
+        getMainMute: function () {
+            var ret = system.LS_optionGet(this.LSKey, "MainMute");
+            if (typeof ret != "boolean") {
+                ret = false;
+            }
+            return ret;
+        },
+
 
         /**
         * Play an SFX by creating an Audio element
@@ -219,12 +243,12 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         */
         playSFX: function (sfxId) {
             try {
-                if (!this.getMute("SFX") && !this.getMute("Main")) { //playing only if both not mutted
+                if (!this.getSFXsMute() && !this.getMainMute()) { //playing only if both not mutted
                     var srcs = [];
-                    if (this.supportedFormat.ogg) { srcs.push({ src: "audio/" + sfxId + ".ogg", type: "audio/ogg" }); }
-                    if (this.supportedFormat.aac) { srcs.push({ src: "audio/" + sfxId + ".aac", type: "audio/aac" }); }
-                    if (this.supportedFormat.mp3) { srcs.push({ src: "audio/" + sfxId + ".mp3", type: "audio/mp3" }); }
-                    if (this.supportedFormat.wav) { srcs.push({ src: "audio/" + sfxId + ".wav", type: "audio/wav" }); }
+                    if (this.supportedFormat.ogg) { srcs.push({ src: this._pathname + sfxId + ".ogg", type: "audio/ogg" }); }
+                    if (this.supportedFormat.aac) { srcs.push({ src: this._pathname + sfxId + ".aac", type: "audio/aac" }); }
+                    if (this.supportedFormat.mp3) { srcs.push({ src: this._pathname + sfxId + ".mp3", type: "audio/mp3" }); }
+                    if (this.supportedFormat.wav) { srcs.push({ src: this._pathname + sfxId + ".wav", type: "audio/wav" }); }
 
                     var sfxWgt = new mobAudio({
                         "source": srcs,
@@ -232,7 +256,28 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                         autoplay: "autoplay"
                     }).placeAt(win.body());
 
-                    sfxWgt.domNode.volume = this.getVolume("Main") * this.getVolume("SFX") / 10000;
+                    /**
+                     * To be inherited
+                     */
+                    sfxWgt.getVolume = function () {
+                        return this.domNode.volume;
+                    },
+                    sfxWgt.setVolume = function (newVol) {
+                        this.domNode.volume = newVol;
+                    },
+                    sfxWgt.play = function () {
+                        this.domNode.play();
+                    },
+                    sfxWgt.pause = function () {
+                        this.domNode.pause();
+                    },
+                    sfxWgt.stop = function () {
+                        this.domNode.stop();
+                    },
+                    sfxWgt.release = function () {
+                    };
+
+                    sfxWgt.domNode.volume = this.getMainVolume() * this.getSFXsVolume() / 10000;
 
                     this.evl[sfxWgt.domNode.id] = []; //keep track of event handlers
                     this.evl[sfxWgt.domNode.id].push(on.once(sfxWgt, "ended", lang.hitch(this, this._SFXcleanup, sfxWgt))); //destroy after playback
@@ -254,8 +299,8 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         /**
         * Clean up an sfx audio widget including its event handlers
         *
-        * @param {object} sfxWgt, the widget to cleanup
-        * @param {object} e, the event that lead to the cleanup
+        * @param {widget} sfxWgt, the widget to cleanup
+        * @param {event} e, the event that lead to the cleanup
         * @private
         */
         _SFXcleanup: function (sfxWgt, e) {
@@ -267,7 +312,6 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             sfxWgt.destroyRecursive();
         }
 
-    }); //end declare
-    return new sound();
+    }); //end declare and run
 
 });     //define

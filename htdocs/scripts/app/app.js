@@ -6,7 +6,7 @@
 /**
 * Main file
 */
-"use strict"; //enable strict mode
+//"use strict"; //enable strict mode
 
 
 define([
@@ -46,8 +46,7 @@ define([
             //create the gloabal app Deferred
             window.appDeferred = new Deferred();
 
-            //init sound
-            //appSound.init(system.LSKey);
+
 
             //create the model
             this.model = new model();
@@ -126,10 +125,27 @@ define([
             window.appDeferred.then( //waiting for whatever we want to preload
                 function (deferredRes) { //when wating is over call this function
                     console.log(deferredRes);
+
+                    //TEST
+                    if (AppEnv.platform == 'android') {
+                        appSound = platformSound;
+                        platformSound = undefined;
+                    }
+
+
+                    //init sound
+                    var sound = new appSound();
+                    sound.init(AppEnv.LSKey);
+
+
                     aV.hideLogo();
                     context.reset();
-                });
-            window.appDeferred.resolve("Loading successful"); //TOSET: proper location of this code when all you wan to preload is done
+                }
+            );
+
+            if (AppEnv.platform != 'android') {
+                window.appDeferred.resolve("Loading successful"); //TOSET: proper location of this code when all you want to preload is done
+            }
         },
 
         /**

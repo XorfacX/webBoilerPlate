@@ -9,8 +9,8 @@ It uses:
 * javascript framework: dojo
 * script tool: waf
 * build tool: closure compiler
-* build script: app.profile.js which must be updated to fit your project
-
+* build script: depends/build.profile.js which must be updated to fit your project
+* Apache Cordova plugins: 
 
 HowTo
 ---
@@ -24,3 +24,5 @@ Dependencies
 ---
 Python >2.6 <3 to be able to execute waf script (TODO update to python 3)   
 NodeJS for mobile packaging though Apache Cordova
+Android SDK
+Java JDK
