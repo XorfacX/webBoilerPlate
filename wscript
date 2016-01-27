@@ -435,7 +435,7 @@ def build(bld):
 
         #add platform to cordova list of platforms task
         def cordovaAddPlatform_task(task):
-            cordova_android_proc = subprocess.Popen("cordova platform add " + bld.env.PLATFORM,
+            cordova_android_proc = subprocess.Popen("cordova platform add " + bld.env.PLATFORM + "@latest",
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -448,6 +448,23 @@ def build(bld):
                     print err
                 android_plat_node = (cordova_proj_node.find_node("platforms") and cordova_proj_node.find_node("platforms").find_node("android"))
                 if android_plat_node is None : bld.fatal("platforms/" + bld.env.PLATFORM + " was not found")
+            else :
+                print "Failed: Command Output : \n" + out + "Error :\n" + err
+            return 0
+        
+        #add cordova plugins
+        def cordovaAddPlugins_task(task):
+            cordova_plugin_proc = subprocess.Popen("cordova plugin add cordova-plugin-media",
+                cwd=cordova_proj_node.relpath(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                shell=True)
+            out,err = cordova_plugin_proc.communicate()
+            if cordova_plugin_proc.returncode == 0 :
+                if out is not None and out.strip() != "" :
+                    print out
+                if err is not None and err.strip() != "" :
+                    print err
             else :
                 print "Failed: Command Output : \n" + out + "Error :\n" + err
             return 0
@@ -476,7 +493,7 @@ def build(bld):
 
         #define a cordova platform update task
         def cordovaplatformupdate_task(task):
-            cordovaplatformupdate_proc = subprocess.Popen("cordova platform update " + bld.env.PLATFORM,
+            cordovaplatformupdate_proc = subprocess.Popen("cordova platform update " + bld.env.PLATFORM + "@latest",
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -541,11 +558,18 @@ def build(bld):
         #add android platform
         android_plat_node = (cordova_proj_node.find_node("platforms") and cordova_proj_node.find_node("platforms").find_node("android"))
         if android_plat_node is None :
-             bld(rule = cordovaAddPlatform_task,
+            bld(rule = cordovaAddPlatform_task,
                 always = True,
                 name = "CordovaAddPlatform_task",
                 before = "CordovaCleanPlatform_task")
 
+            #add cordova plugins
+            bld(rule = cordovaAddPlugins_task,
+                always = True,
+                name = "cordovaAddPlugins_task",
+                after = "CordovaAddPlatform_task",
+                before = "CordovaCleanPlatform_task")
+        
         #find existing www & assets/www dir and clean them
         #TODO what if we need cordova.js in the project use ?? => we would need our cordova root to be the same has our git root and cordova/www must be configured to be called htdocs i guess (there is no way we change all our project folder names from htdocs to www). Otherwise we would have to copy cordova.js and cordova_plugins.js into htdocs but it must be done on configure and i dont think they're ready untill build time.
         bld(rule = cordovaCleanPlatform_task,
