@@ -99,14 +99,14 @@ define(['dojo/_base/declare'], function (declare) {
         * 
         * @return {boolean} true if ok, false otherwise
         */
-        LS_optionSet: function (optionVals) {
+        LS_optionSet: function (LSKey, optionVals) {
             var ret = false;
             if (this.hasLocalStorage()) {
-                if (!localStorage[this.LSKey]) {
-                    localStorage[this.LSKey] = JSON.stringify({ options: {} });
+                if (!localStorage[LSKey]) {
+                    localStorage[LSKey] = JSON.stringify({ options: {} });
                 }
 
-                var LSo = JSON.parse(localStorage[this.LSKey]);
+                var LSo = JSON.parse(localStorage[LSKey]);
                 if (!LSo.options) {
                     LSo.options = {};
                 }
@@ -118,7 +118,7 @@ define(['dojo/_base/declare'], function (declare) {
                 }
 
                 ret = true;
-                localStorage[this.LSKey] = JSON.stringify(LSo);
+                localStorage[LSKey] = JSON.stringify(LSo);
             }
 
             return ret;
@@ -131,11 +131,11 @@ define(['dojo/_base/declare'], function (declare) {
         * 
         * @return {(string|undefined)} the option value, undef otherwise
         */
-        LS_optionGet: function (optionName) {
+        LS_optionGet: function (LSKey, optionName) {
             var ret = undefined;
             if (this.hasLocalStorage()) {
-                if (localStorage[this.LSKey]) {
-                    var LSo = JSON.parse(localStorage[this.LSKey]);
+                if (localStorage[LSKey]) {
+                    var LSo = JSON.parse(localStorage[LSKey]);
                     if (LSo.options) {
                         if (typeof optionName != "undefined") {
                             if (typeof LSo.options[optionName] != "undefined") {

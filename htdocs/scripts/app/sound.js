@@ -44,8 +44,8 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         },
 
         /**
-        * Intialize sound stuff
-        */
+         * Intialize sound stuff
+         */
         init: function (LSKey) {
             try {
                 this.LSKey = LSKey; //store the LocalStorage Key for easier access
@@ -71,9 +71,6 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                  * To be inherited
                  * TODO: not good practice to extend original object i suppose!!
                  */
-                this.musicWgt.getVolume = function () {
-                    return this.domNode.volume;
-                },
                 this.musicWgt.setVolume = function (newVol) {
                     this.domNode.volume = newVol;
                 },
@@ -81,13 +78,13 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                     this.domNode.play();
                 },
                this.musicWgt.pause = function () {
-                    this.domNode.pause();
-                },
+                   this.domNode.pause();
+               },
                 this.musicWgt.stop = function () {
                     this.domNode.stop();
                 },
                this.musicWgt.release = function () {
-                };
+               };
 
                 //initial Volumes
                 this.setMainVolume();
@@ -104,9 +101,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         },
 
         /**
-        * Set Music Volume controller
-        * @param {number} _vol, volume value
-        */
+         * Set Music Volume controller
+         * @param {number} _vol, volume value
+         */
         setMusicVolume: function (_vol) {
             var currentVol = this.getMusicVolume();
             var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.main));
@@ -115,9 +112,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             this.musicWgt.setVolume(this.getMainVolume() * vol / 10000);
         },
         /**
-        * Get Music Volume controller
-        * @return {number} the volume value
-        */
+         * Get Music Volume controller
+         * @return {number} the volume value
+         */
         getMusicVolume: function () {
             var ret = system.LS_optionGet(this.LSKey, "MucicVol");
             if (typeof ret != "number") {
@@ -126,9 +123,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             return ret;
         },
         /**
-        * Set Music status controller
-        * @param {boolean} _mute, mute status
-        */
+         * Set Music status controller
+         * @param {boolean} _mute, mute status
+         */
         setMusicMute: function (_mute) {
             var currentMute = this.getMusicMute();
             var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
@@ -137,9 +134,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             !mute && !this.getMainMute() ? this.musicWgt.play() : this.musicWgt.pause();
         },
         /**
-        * Get Music status controller
-        * @return {string} the mute status
-        */
+         * Get Music status controller
+         * @return {string} the mute status
+         */
         getMusicMute: function () {
             var ret = system.LS_optionGet(this.LSKey, "MusicMute");
             if (typeof ret != "boolean") {
@@ -149,9 +146,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         },
 
         /**
-        * Set SFXs Volume controller
-        * @param {number} _vol, volume value
-        */
+         * Set SFXs Volume controller
+         * @param {number} _vol, volume value
+         */
         setSFXsVolume: function (_vol) {
             var currentVol = this.getSFXsVolume();
             var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.sfxs));
@@ -159,9 +156,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             system.LS_optionSet(this.LSKey, { "SFXsVol": vol });
         },
         /**
-        * Get SFXs Volume controller
-        * @return {number} the volume value
-        */
+         * Get SFXs Volume controller
+         * @return {number} the volume value
+         */
         getSFXsVolume: function () {
             var ret = system.LS_optionGet(this.LSKey, "SFXsVol");
             if (typeof ret != "number") {
@@ -170,9 +167,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             return ret;
         },
         /**
-        * Set SFXs status controller
-        * @param {boolean} _mute, mute status
-        */
+         * Set SFXs status controller
+         * @param {boolean} _mute, mute status
+         */
         setSFXsMute: function (_mute) {
             var currentMute = this.getSFXsMute();
             var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
@@ -180,9 +177,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             system.LS_optionSet(this.LSKey, { "SFXsMute": mute });
         },
         /**
-        * Get SFXs status controller
-        * @return {string} the mute status
-        */
+         * Get SFXs status controller
+         * @return {string} the mute status
+         */
         getSFXsMute: function () {
             var ret = system.LS_optionGet(this.LSKey, "SFXsMute");
             if (typeof ret != "boolean") {
@@ -192,9 +189,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
         },
 
         /**
-        * Set Main Volume controller
-        * @param {number} _vol, volume value
-        */
+         * Set Main Volume controller
+         * @param {number} _vol, volume value
+         */
         setMainVolume: function (_vol) {
             var currentVol = this.getMainVolume();
             var vol = (typeof _vol != "undefined" ? _vol : (typeof currentVol != "undefined" ? currentVol : this.defaultVol.main));
@@ -203,9 +200,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             this.musicWgt.setVolume(this.getMusicVolume() * vol / 10000);
         },
         /**
-        * Get Main Volume controller
-        * @return {number} the volume value
-        */
+         * Get Main Volume controller
+         * @return {number} the volume value
+         */
         getMainVolume: function () {
             var ret = system.LS_optionGet(this.LSKey, "MainVol");
             if (typeof ret != "number") {
@@ -214,9 +211,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             return ret;
         },
         /**
-        * Set Main status controller
-        * @param {boolean} _mute, mute status
-        */
+         * Set Main status controller
+         * @param {boolean} _mute, mute status
+         */
         setMainMute: function (_mute) {
             var currentMute = this.getMainMute();
             var mute = (typeof _mute != "undefined" ? _mute : (typeof currentMute != "undefined" ? currentMute : false));
@@ -225,9 +222,9 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             !mute && !this.getMusicMute() ? this.musicWgt.play() : this.musicWgt.pause(); //handle music
         },
         /**
-        * Get Main status controller
-        * @return {string} the mute status
-        */
+         * Get Main status controller
+         * @return {string} the mute status
+         */
         getMainMute: function () {
             var ret = system.LS_optionGet(this.LSKey, "MainMute");
             if (typeof ret != "boolean") {
@@ -238,9 +235,11 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
 
 
         /**
-        * Play an SFX by creating an Audio element
-        * @param {string} sfxId the filename of the file to play from audio/ folder
-        */
+         * Play an SFX by creating an Audio element
+         * 
+         * @param {string} sfxId the filename of the file to play from audio/ folder
+         * @return {object|undefined} the created mobile audio widget on success or undef otherwise
+         */
         playSFX: function (sfxId) {
             try {
                 if (!this.getSFXsMute() && !this.getMainMute()) { //playing only if both not mutted
@@ -256,27 +255,6 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                         autoplay: "autoplay"
                     }).placeAt(win.body());
 
-                    /**
-                     * To be inherited
-                     */
-                    sfxWgt.getVolume = function () {
-                        return this.domNode.volume;
-                    },
-                    sfxWgt.setVolume = function (newVol) {
-                        this.domNode.volume = newVol;
-                    },
-                    sfxWgt.play = function () {
-                        this.domNode.play();
-                    },
-                    sfxWgt.pause = function () {
-                        this.domNode.pause();
-                    },
-                    sfxWgt.stop = function () {
-                        this.domNode.stop();
-                    },
-                    sfxWgt.release = function () {
-                    };
-
                     sfxWgt.domNode.volume = this.getMainVolume() * this.getSFXsVolume() / 10000;
 
                     this.evl[sfxWgt.domNode.id] = []; //keep track of event handlers
@@ -288,21 +266,24 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                     for (var i = 0; i < srcs.length; i++) {
                         this.evl[sfxWgt.domNode.id].push(on.once(sfxWgt.domNode.children[i], "error", lang.hitch(this, this._SFXcleanup, sfxWgt)));
                     }
+
+                    return sfxWgt;
                 }
             } catch (e) {
-                console.log("error loading file audio/" + sfxId + " - " + e.message);
+                console.log("error loading audio file " + this._pathname + sfxId + " - " + e.message);
             }
             //var aud = $('#audio_player').get(0);
             //aud.play();
         },
 
         /**
-        * Clean up an sfx audio widget including its event handlers
-        *
-        * @param {widget} sfxWgt, the widget to cleanup
-        * @param {event} e, the event that lead to the cleanup
-        * @private
-        */
+         * Clean up an sfx audio widget including its event handlers
+         *
+         * @param {widget} sfxWgt, the widget to cleanup
+         * @param {event} e, the event that lead to the cleanup
+         * 
+         * @protected
+         */
         _SFXcleanup: function (sfxWgt, e) {
             for (var j = 0; j < this.evl[sfxWgt.domNode.id].length; j++) {
                 this.evl[sfxWgt.domNode.id][j].remove();

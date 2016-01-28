@@ -46,8 +46,6 @@ define([
             //create the gloabal app Deferred
             window.appDeferred = new Deferred();
 
-
-
             //create the model
             this.model = new model();
 
@@ -132,11 +130,10 @@ define([
                         platformSound = undefined;
                     }
 
-
                     //init sound
-                    var sound = new appSound();
-                    sound.init(AppEnv.LSKey);
-
+                    window.appSound = new appSound();
+                    window.appSound.init(AppEnv.LSKey);
+                    window.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
 
                     aV.hideLogo();
                     context.reset();
@@ -160,7 +157,17 @@ define([
 
             this.view.reset();
             on(document, touch.release, lang.hitch(this, function (event) {
-                var res = "App model says: " + this.model.get();
+                var res = "App model says: " + this.model.get() + "\n SFX is played";
+                window.appSound.playSFX("click");
+                var int1 = setInterval(function () {
+                    window.appSound.playSFX("click");
+                }, 750);
+                var int2 = setInterval(function () {
+                    window.appSound.playSFX("click");
+                }, 500);
+                setTimeout(function () {
+                    clearInterval(int1), clearInterval(int2);
+                }, 7000);
                 console.log(res);
                 this.view.display(res);
             }));
