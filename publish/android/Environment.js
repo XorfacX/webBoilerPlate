@@ -11,21 +11,17 @@ require([
                     platform: 'android'
                 });
 
-                //TODO use dojo.on
                 //TOSET: ANDROID specific env code goes here
-                document.addEventListener('deviceready', function () {
+                on(document, "deviceready", lang.hitch(this, function (event) {
                     console.log("cordova loaded ok");
-                    //alert("cordova loaded ok");
 
-                    document.addEventListener('pause', function () {
+                    on(document, "pause", lang.hitch(this, function (event) {
                         console.log("pause event detected");
-                        alert("pause event detected");
-                    }, false);
+                    }));
 
-                    document.addEventListener('resume', function () {
+                    on(document, "resume", lang.hitch(this, function (event) {
                         console.log("resume event detected");
-                        alert("resume event detected");
-                    }, false);
+                    }));
 
                     var context;
                     platformSound = declare(sound, {
@@ -103,7 +99,7 @@ require([
                     });
 
                     window.appDeferred.resolve("Loading successful");
-                }, false);
+                }));
             } //constructor
         })();  //declare then execute
     };
