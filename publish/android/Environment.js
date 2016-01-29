@@ -1,6 +1,6 @@
 require([
-    "dojo/_base/declare", "dojo/_base/lang", "app/system", "app/sound"
-], function (declare, lang, system, sound) {
+    "dojo/_base/declare", "dojo/_base/lang", "dojo/on", "app/system", "app/sound"
+], function (declare, lang, on, system, sound) {
 
     setEnvironment = function () {
         declare(_AppEnvCreation, {
