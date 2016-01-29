@@ -562,14 +562,8 @@ def build(bld):
                 always = True,
                 name = "CordovaAddPlatform_task",
                 after = "VersionSet_task",
-                before = "CordovaAddPlugins_task")
+                before = "CordovaCleanPlatform_task")
 
-        #add cordova plugins (we do this all the time because it acts like a plugin update ...)
-        bld(rule = cordovaAddPlugins_task,
-            always = True,
-            name = "CordovaAddPlugins_task",
-            before = "CordovaCleanPlatform_task")
-        
         #find existing www & assets/www dir and clean them
         #TODO what if we need cordova.js in the project use ?? => we would need our cordova root to be the same has our git root and cordova/www must be configured to be called htdocs i guess (there is no way we change all our project folder names from htdocs to www). Otherwise we would have to copy cordova.js and cordova_plugins.js into htdocs but it must be done on configure and i dont think they're ready untill build time.
         bld(rule = cordovaCleanPlatform_task,
@@ -602,7 +596,7 @@ def build(bld):
         else:
             print 'android_pub_merge_node empty'
 
-        #cordova platform: copy wbuild, update then build
+        #cordova platform: copy wbuild, update, update/add plugins, build
         bld(rule = appbuildtocordovacopy_task,
             always = True,
             name = "AppBuildToCordovaCopy_task",
@@ -611,14 +605,21 @@ def build(bld):
         bld(rule = cordovaplatformupdate_task,
             always = True,
             name = "CordovaPlatformUpdate_task",
-            before = "androbuild_task",
+            before = "CordovaAddPlugins_task",
             after = "AppBuildToCordovaCopy_task")
+
+            #add cordova plugins (we do this all the time because it acts like a plugin update ...)
+        bld(rule = cordovaAddPlugins_task,
+            always = True,
+            name = "CordovaAddPlugins_task",
+            before = "androbuild_task",
+            after = "CordovaPlatformUpdate_task")
 
         bld(rule = androbuild_task,
             source = cordova_proj_node.make_node("config.xml"),
             always = True,
             name = "androbuild_task",
-            after = "CordovaPlatformUpdate_task")
+            after = "CordovaAddPlugins_task")
     #END ANDROID PLATFORM
 
     elif bld.env.PLATFORM == 'chrome' :
