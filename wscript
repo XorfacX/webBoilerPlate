@@ -454,7 +454,7 @@ def build(bld):
         
         #add cordova plugins
         def cordovaAddPlugins_task(task):
-            cordova_plugin_proc = subprocess.Popen("cordova plugin add cordova-plugin-media",
+            cordova_plugin_proc = subprocess.Popen("cordova plugin add cordova-plugin-media@latest",
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

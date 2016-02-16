@@ -44,10 +44,10 @@ require([
                                 },
                                 function (status) { //LOOP the music
                                     if (status === Media.MEDIA_STOPPED) {
-                                        this._musicMedia.play();
+                                        lang.hitch(context, context._musicMedia.play)();
                                     }
                                 }
-                            );
+                            ); //CALLBACKS NOT WORKING: cordova.plugin.media bug @https://issues.apache.org/jira/browse/CB-10476
                             this.musicWgt.setVolume = function (newVol) {
                                 context._musicMedia.setVolume(newVol); //between 0.0 and 1.0
                             },
@@ -63,6 +63,9 @@ require([
                             this.musicWgt.release = function () {
                                 context._musicMedia.release();
                             };
+                            //on(document, "startPlayingAudio, stopPlayingAudio, pausePlayingAudio, release, status", lang.hitch(this, function (event) {
+                            //    console.log("Media event: " + JSON.stringify(event));
+                            //}));
 
                             //this._musicMedia.play();
                             //TODO music should start be mute is not working...
@@ -84,7 +87,7 @@ require([
                                     },
                                     function (status) { //clean on finish
                                         if (status === Media.MEDIA_STOPPED) {
-                                            this._SFXcleanup(sfxWgt);
+                                            lang.hitch(context, context._SFXcleanup, sfxWgt)();
                                         }
                                     }
                                 );
@@ -92,8 +95,8 @@ require([
                             }
                         },
                         _SFXcleanup: function (sfxWgt, e) {
+                            this._sfxMedias[sfxWgt.domNode.id].release(); //before calling parent coz after the widget is destroyed
                             this.inherited(arguments, [sfxWgt, e]); //call superclass _SFXcleanup()
-                            this._sfxMedias[sfxWgt.domNode.id].release();
                         }
                         //TODO: this isworking, but do we need to pause/mute on pause event ?
                     });
