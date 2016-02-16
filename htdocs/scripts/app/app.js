@@ -135,6 +135,8 @@ define([
                     window.appSound.init(AppEnv.LSKey);
                     window.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
 
+                    //context.setup.sound.setMute("music");
+
                     aV.hideLogo();
                     context.reset();
                 }
@@ -157,7 +159,7 @@ define([
 
             this.view.reset();
             on(document, touch.release, lang.hitch(this, function (event) {
-                var res = "App model says: " + this.model.get() + "\n SFX is played";
+                var res = "App model says: " + this.model.get() + "<br/> SFX is played";
                 window.appSound.playSFX("click");
                 var int1 = setInterval(function () {
                     window.appSound.playSFX("click");

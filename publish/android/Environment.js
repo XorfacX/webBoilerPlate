@@ -40,14 +40,15 @@ require([
                                     console.log("Music Success");
                                 },
                                 function (err) {
-                                    console.log("Music Error: " + err);
+                                    console.log("Music Error: code " + err.code + (typeof err.msg != "undefined" ? ', msg: ' + err.msg : ''));
+                                    this.release();
                                 },
                                 function (status) { //LOOP the music
                                     if (status === Media.MEDIA_STOPPED) {
                                         this.play();
                                     }
                                 }
-                            ); //CALLBACKS NOT WORKING: cordova.plugin.media bug @https://issues.apache.org/jira/browse/CB-10476
+                            );
                             this.musicWgt.setVolume = function (newVol) {
                                 context._musicMedia.setVolume(newVol); //between 0.0 and 1.0
                             },
@@ -55,7 +56,14 @@ require([
                                 context._musicMedia.play();
                             },
                             this.musicWgt.pause = function () {
-                                context._musicMedia.pause();
+                                context._musicMedia.getCurrentPosition(function (position) {
+                                    if (position > 0) {
+                                        context._musicMedia.pause();
+                                    }
+                                },
+                                function (err) { //error callback
+                                    console.log("Music::pause(), error getting position" + err);
+                                });
                             },
                             this.musicWgt.stop = function () {
                                 context._musicMedia.stop();
@@ -68,8 +76,7 @@ require([
                             //}));
 
                             //this._musicMedia.play();
-                            //TODO music should start be mute is not working...
-                            //TODO music is not looping
+                            //TODO music should start mute, it's not working...
                             //TODO this is working, we must pause it on pause event though and resume it when needed!!
                         },
 
@@ -82,11 +89,11 @@ require([
                                         console.log("SFX " + sfxId + " Success");
                                     },
                                     function (err) {
-                                        console.log("SFX " + sfxId + " Error: " + err);
-                                        //TODO maybe cleanup here ?
+                                        console.log("SFX " + sfxId + " Error: code " + err.code + (typeof err.msg != "undefined" ? ', msg: ' + err.msg : ''));
+                                        lang.hitch(context, context._SFXcleanup, sfxWgt)();
                                     },
-                                    function (status) { //clean on finish
-                                        if (status === Media.MEDIA_STOPPED) {
+                                    function (status) {
+                                        if (status === Media.MEDIA_STOPPED) { //clean on finish
                                             lang.hitch(context, context._SFXcleanup, sfxWgt)();
                                         }
                                     }
