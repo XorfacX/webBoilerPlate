@@ -44,7 +44,7 @@ require([
                                 },
                                 function (status) { //LOOP the music
                                     if (status === Media.MEDIA_STOPPED) {
-                                        lang.hitch(context, context._musicMedia.play)();
+                                        this.play();
                                     }
                                 }
                             ); //CALLBACKS NOT WORKING: cordova.plugin.media bug @https://issues.apache.org/jira/browse/CB-10476
