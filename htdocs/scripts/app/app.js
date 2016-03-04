@@ -19,9 +19,8 @@ define([
     "app/system",
     "app/appM",
     "app/appV",
-    "app/sound",
     "app/Environment"
-], function (lang, declare, on, touch, ready, Deferred, system, model, view, appSound) {
+], function (lang, declare, on, touch, ready, Deferred, system, model, view) {
 
     /** @private */
     var context, screenTO = 2000; //screenTO == sum of transition duration defined inside css for #title and #logo
@@ -123,15 +122,10 @@ define([
             window.appDeferred.then( //waiting for whatever we want to preload
                 function (deferredRes) { //when wating is over call this function
                     console.log(deferredRes);
-
-                    //TEST
-                    if (AppEnv.platform == 'android') {
-                        appSound = platformSound;
-                        platformSound = undefined;
-                    }
-
+                   
                     //init sound
-                    window.appSound = new appSound();
+                    window.appSound = new AppEnv.platformSound();
+                    AppEnv.platformSound = undefined, delete AppEnv.platformSound; //clean
                     window.appSound.init(AppEnv.LSKey);
                     window.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
 

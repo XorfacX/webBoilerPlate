@@ -24,7 +24,7 @@ require([
                     }));
 
                     var context;
-                    platformSound = declare(sound, {
+                    AppEnv.platformSound = declare(sound, {
                         ___ANDROIDSOUND___: 1,
                         _pathname: "file:///android_asset/www/audio/",
                         _musicMedia: undefined,
