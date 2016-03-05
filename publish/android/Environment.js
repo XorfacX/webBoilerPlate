@@ -17,17 +17,25 @@ require([
 
                     on(document, "pause", lang.hitch(this, function (event) {
                         console.log("pause event detected");
+                        window.appSound.onPauseEVH();
                     }));
 
                     on(document, "resume", lang.hitch(this, function (event) {
                         console.log("resume event detected");
+                        window.appSound.onResumeEVH();
                     }));
 
+
+                    /**
+                     * Sound handling using cordova media plugin, https://www.npmjs.com/package/cordova-plugin-media
+                     */
                     var context;
                     AppEnv.platformSound = declare(sound, {
                         ___ANDROIDSOUND___: 1,
                         _pathname: "file:///android_asset/www/audio/",
                         _musicMedia: undefined,
+                        _musicStatus: undefined,
+                        _musicStatusBkp: undefined,
 
                         constructor: function () {
                             context = this;
@@ -43,8 +51,9 @@ require([
                                     console.log("Music Error: code " + err.code + (typeof err.msg != "undefined" ? ', msg: ' + err.msg : ''));
                                     this.release();
                                 },
-                                function (status) { //LOOP the music
-                                    if (status === Media.MEDIA_STOPPED) {
+                                function (status) {
+                                    context._musicStatus = status;
+                                    if (status === Media.MEDIA_STOPPED) { //LOOP the music
                                         this.play();
                                     }
                                 }
@@ -76,8 +85,27 @@ require([
                             //}));
 
                             //this._musicMedia.play();
-                            //TODO music should start mute, it's not working...
-                            //TODO this is working, we must pause it on pause event though and resume it when needed!!
+                            //TODO music should start muted, it's not working...
+                        },
+
+                        /**
+                         * Cordova Pause Event Handler
+                         */
+                        onPauseEVH: function () {
+                            this._musicStatusBkp = this._musicStatus; //backup music status to restore on resume
+                            if (this._musicStatus === Media.STARTING || this._musicStatus === Media.MEDIA_RUNNING) { //pause if it is playing, otherwise do nothing
+                                this.musicWgt.pause();
+                            }
+                            //NB: doesn't seems we need to pause SFXs.
+                        },
+                        /**
+                         * Cordova Resume Event Handler
+                         */
+                        onResumeEVH: function () {
+                            if (typeof this._musicStatusBkp != "undefined" && (this._musicStatusBkp === Media.STARTING || this._musicStatusBkp === Media.MEDIA_RUNNING)) { //play if it was playing, otherwise do nothing
+                                this.musicWgt.play(); //this will update _musicStatus
+                            }
+                            this._musicStatusBkp = undefined; //in all cases remove backup status
                         },
 
                         _sfxMedias: {},
@@ -105,7 +133,6 @@ require([
                             this._sfxMedias[sfxWgt.domNode.id].release(); //before calling parent coz after the widget is destroyed
                             this.inherited(arguments, [sfxWgt, e]); //call superclass _SFXcleanup()
                         }
-                        //TODO: this isworking, but do we need to pause/mute on pause event ?
                     });
 
                     window.appDeferred.resolve("Loading successful");

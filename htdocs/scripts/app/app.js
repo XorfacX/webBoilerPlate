@@ -153,7 +153,7 @@ define([
 
             this.view.reset();
             on(document, touch.release, lang.hitch(this, function (event) {
-                var res = "App model says: " + this.model.get() + "<br/> SFX is played";
+                var res = "App model says: " + this.model.get() + ". SFX is played";
                 window.appSound.playSFX("click");
                 var int1 = setInterval(function () {
                     window.appSound.playSFX("click");
