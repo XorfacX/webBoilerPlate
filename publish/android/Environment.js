@@ -12,7 +12,7 @@ require([
                 });
 
                 //TOSET: ANDROID specific env code goes here
-                on(document, "deviceready", lang.hitch(this, function (event) {
+                var devicereadyEVL = on(document, "deviceready", lang.hitch(this, function (event) {
                     console.log("cordova loaded ok");
 
                     on(document, "pause", lang.hitch(this, function (event) {
@@ -136,6 +136,7 @@ require([
                     });
 
                     window.appDeferred.resolve("Loading successful");
+                    devicereadyEVL.remove();
                 }));
             } //constructor
         })();  //declare then execute

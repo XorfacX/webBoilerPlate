@@ -10,15 +10,15 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on", "dojo/dom", "dojox/mobile/Audio", "app/system"], function (declare, lang, win, on, dom, mobAudio, system) {
+define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on", "dojo/dom", "dijit/registry", "dojox/mobile/Audio", "app/system"], function (declare, lang, win, on, dom, registry, mobAudio, system) {
 
     /**
-    * Sound object
-    * Handle everything related to sound (sfxs, music, etc)
-    *
-    * http://www.w3.org/wiki/HTML/Elements/audio for reference
-    * Warning check http://html5test.com/ for browser audio type support 
-    */
+     * Sound object
+     * Handle everything related to sound (sfxs, music, etc)
+     *
+     * http://www.w3.org/wiki/HTML/Elements/audio for reference
+     * Warning check http://html5test.com/ for browser audio type support 
+     */
     return declare(null, {
         /** @private */ musicWgt: undefined,
         /** @private @const */ defaultVol: { main: 100, music: 100, sfxs: 100, video: 100 },
@@ -50,26 +50,28 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
             try {
                 this.LSKey = LSKey; //store the LocalStorage Key for easier access
 
-                //music widget creation
-                this.musicWgt = new mobAudio({
-                    "source": [
+                //music widget creation/recovery
+                this.musicWgt = registry.byId("musicAudio");
+                if (typeof this.musicWgt == "undefined") {
+                    this.musicWgt = new mobAudio({
+                        "source": [
                         { src: this._pathname + this.musicFnL[0] + ".ogg", type: "audio/ogg" } //only one song for now
-                        //alternative sources
-                        //   { src: "audio/music.mp3", type: "audio/mpeg" },
-                        //   { src: "audio/music.wav", type: "audio/wav" }
-                    ],
-                    //autoplay: "autoplay",
-                    loop: "loop",
-                    id: "musicAudio",
-                    preload: 'auto'
-                    //"width": 0,
-                    // "height": 0
-                }).placeAt(win.body());
-                this.musicWgt.startup();
+                            //alternative sources
+                            //   { src: "audio/music.mp3", type: "audio/mpeg" },
+                            //   { src: "audio/music.wav", type: "audio/wav" }
+                        ],
+                        //autoplay: "autoplay",
+                        loop: "loop",
+                        id: "musicAudio",
+                        preload: 'auto'
+                        //"width": 0,
+                        // "height": 0
+                    }).placeAt(win.body());
+                    this.musicWgt.startup();
+                }
 
                 /**
                  * To be inherited
-                 * TODO: not good practice to extend original object i suppose!!
                  */
                 this.musicWgt.setVolume = function (newVol) {
                     this.domNode.volume = newVol;
@@ -96,7 +98,7 @@ define(['dojo/_base/declare', 'dojo/_base/lang', "dojo/_base/window", "dojo/on",
                 this.setSFXsMute();
 
             } catch (error) {
-                console.log(error);
+                console.log(JSON.stringify(error));
             }
         },
 
