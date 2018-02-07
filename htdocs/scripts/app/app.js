@@ -10,8 +10,8 @@
 
 
 define([
-    'dojo/_base/lang',
     'dojo/_base/declare',
+    'dojo/_base/lang',
     "dojo/on",
     "dojo/touch",
     "dojo/ready",
@@ -20,10 +20,7 @@ define([
     "app/appM",
     "app/appV",
     "app/Environment"
-], function (lang, declare, on, touch, ready, Deferred, system, model, view) {
-
-    /** @private */
-    var context, screenTO = 2000; //screenTO == sum of transition duration defined inside css for #title and #logo
+], function (declare, lang, on, touch, ready, Deferred, system, model, view) {
 
     /**
      * Create the whole app view
@@ -34,7 +31,6 @@ define([
          * @constructor
          */
         constructor: function () {
-            context = this; //need to keep track inside "on" and "require" calls if we don't want to (or can't) use lang.hitch
 
             var forcedNode = (location.search.match(/n=(\S+)/) ? RegExp.$1 : undefined); //"n", node parameter
 
@@ -52,25 +48,27 @@ define([
             var aV = this.view = new view();
 
             //wait for dom ready
-            ready(function () {
+            ready(lang.hitch(this, function () {
                 if (typeof forcedNode == "undefined") {
                     aV.showTitle("My App Title".replace(/_/gi, " ").replace(/ /g, "<br/>")); //replace potential underscore with space than spaces with <br/> tag
 
-                    var onSig = on.once(aV.getRawView(), "click", function (e) {
-                        context._Title2Logo(aV, to);
-                    });
+                    var onSig = on.once(aV.getRawView(), "click", lang.hitch(this, function (e) {
+                        this._Title2Logo(aV, to);
+                    }));
 
-                    var to = setTimeout(function () {
-                        context._Title2Logo(aV, onSig); //CANT use on.emit ...
-                    }, screenTO);
+                    var to = setTimeout(lang.hitch(this, function () {
+                        this._Title2Logo(aV, onSig); //CANT use on.emit ...
+                    }), this.screenTO);
                 } else { //to display directly a specific node
                     this._launch(aV, forcedNode);
                 }
-            }); //ready
+            })); //ready
         }, //constructor
 
         model: undefined,
         view: undefined,
+
+        screenTO: 2000, //screenTO == sum of transition duration defined inside css for #title and #logo
 
         /**
          * Transition from Title to Logo screen
@@ -88,13 +86,13 @@ define([
 
             aV.hideTitle().showLogo();
 
-            var onSig = on.once(aV.getRawView(), "click", function (e) {
-                context._Logo2Launch(aV, to);
-            });
+            var onSig = on.once(aV.getRawView(), "click", lang.hitch(this, function (e) {
+                this._Logo2Launch(aV, to);
+            }));
 
-            var to = setTimeout(function () {
-                context._Logo2Launch(aV, onSig);
-            }, screenTO);
+            var to = setTimeout(lang.hitch(this, function () {
+                this._Logo2Launch(aV, onSig);
+            }), this.screenTO);
         },
 
         /**
@@ -111,7 +109,7 @@ define([
                 }
             }
 
-            context._launch(aV);
+            this._launch(aV);
         },
 
         /**
@@ -120,21 +118,21 @@ define([
          */
         _launch: function (aV, node) {
             window.appDeferred.then( //waiting for whatever we want to preload
-                function (deferredRes) { //when wating is over call this function
+                lang.hitch(this, function (deferredRes) { //when wating is over call this function
                     console.log(deferredRes);
-                   
+
                     //init sound
                     window.appSound = new AppEnv.platformSound();
                     AppEnv.platformSound = undefined, delete AppEnv.platformSound; //clean
                     window.appSound.init(AppEnv.LSKey);
                     window.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
 
-                    //context.setup.sound.setMute("music");
+                    //this.setup.sound.setMute("music");
 
                     aV.hideLogo();
-                    context.reset();
+                    this.reset();
                 }
-            );
+            ));
 
             if (AppEnv.platform != 'android') {
                 window.appDeferred.resolve("Loading successful"); //TOSET: proper location of this code when all you want to preload is done
