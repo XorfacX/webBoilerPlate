@@ -117,26 +117,39 @@ define([
          * @private
          */
         _launch: function (aV, node) {
-            window.appDeferred.then( //waiting for whatever we want to preload
-                lang.hitch(this, function (deferredRes) { //when wating is over call this function
-                    console.log(deferredRes);
+            this.platformInit(); //default
+            if (window.envDeferred) { //waiting for whatever we want to preload
+                window.envDeferred.then(lang.hitch(this, function () { //when wating is over call this function
+                    //init platform again
+                    this.platformInit();
+                    this.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
 
-                    //init sound
-                    window.appSound = new AppEnv.platformSound();
-                    AppEnv.platformSound = undefined, delete AppEnv.platformSound; //clean
-                    window.appSound.init(AppEnv.LSKey);
-                    window.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
+                    //clean
+                    AppEnv.platformSound = undefined, delete AppEnv.platformSound;
+                    //TOSET other platform stuff to clean up
 
-                    //this.setup.sound.setMute("music");
+                    //delete window.envDeferred; //nb: dont delete, we want to keep it
 
                     aV.hideLogo();
                     this.reset();
-                })
-            );
-
-            if (AppEnv.platform != 'android') {
-                window.appDeferred.resolve("Loading successful"); //TOSET: proper location of this code when all you want to preload is done
+                }));
+            } else {
+                this.appSound.setMusicMute(); //toggle the music ON if set by the option or if we need to set default
+                aV.hideLogo();
+                this.reset();
             }
+        },
+
+        /**
+         * Platform init
+         */
+        platformInit: function () {
+            //SOUND INIT
+            delete this.appSound;
+            this.appSound = new AppEnv.platformSound();
+            this.appSound.init(AppEnv.LSKey);
+
+            //TOSET other platform specific stuff to init
         },
 
         /**
@@ -152,13 +165,13 @@ define([
             this.view.reset();
             on(document, touch.release, lang.hitch(this, function (event) {
                 var res = "App model says: " + this.model.get() + ". SFX is played";
-                window.appSound.playSFX("click");
-                var int1 = setInterval(function () {
-                    window.appSound.playSFX("click");
-                }, 750);
-                var int2 = setInterval(function () {
-                    window.appSound.playSFX("click");
-                }, 500);
+                this.appSound.playSFX("click");
+                var int1 = setInterval(lang.hitch(this, function () {
+                    this.appSound.playSFX("click");
+                }), 750);
+                var int2 = setInterval(lang.hitch(this, function() {
+                    this.appSound.playSFX("click");
+                }), 500);
                 setTimeout(function () {
                     clearInterval(int1), clearInterval(int2);
                 }, 7000);
