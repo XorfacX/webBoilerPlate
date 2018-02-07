@@ -10,7 +10,7 @@ define(['dojo/_base/declare', "dojo/_base/lang", "app/sound"], function (declare
             AppEnv = {
                 //TOSET: GENERAL AppEnv definition
                 LSKey: "MyAppLSkey",
-                platformSound : appSound //sound class, might be extended
+                platformSound: appSound //sound class, might be extended
             }; //AppEnv
 
             //TOSET: GENERAL App startup code goes here (will be mixed w platform env before execution)

@@ -14,6 +14,7 @@ require([
                 //update backend location for modules
                 require({ paths: { backend: AppEnv.backendPath + 'scripts' } });
 
+                /*TODO uncomment if useful
                 //Google Anaylitics (nb: after mixin to get good url)
                 (function (i, s, o, g, r, a, m) {
                     i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
@@ -27,7 +28,7 @@ require([
                 ga('send', 'pageview');
 
                 ga('require', 'linker');
-                ga('linker:autoLink', [AppEnv.backendURL.match(/^https?\:\/\/(?:www\.)?([^\/?#]+)(?:[\/?#]|$)/i)[1], AppEnv.backendURL]); //add both coz i duno which one works
+                ga('linker:autoLink', [AppEnv.backendURL.match(/^https?\:\/\/(?:www\.)?([^\/?#]+)(?:[\/?#]|$)/i)[1], AppEnv.backendURL]); //add both coz i duno which one works */
 
 
                 //TOSET: ANDROID specific env code goes here

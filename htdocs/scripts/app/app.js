@@ -131,8 +131,8 @@ define([
 
                     aV.hideLogo();
                     this.reset();
-                }
-            ));
+                })
+            );
 
             if (AppEnv.platform != 'android') {
                 window.appDeferred.resolve("Loading successful"); //TOSET: proper location of this code when all you want to preload is done

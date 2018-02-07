@@ -50,7 +50,7 @@
     <!-- TODO: How To Handle permissions ?? -->
 
     <preference name="Fullscreen" value="true" />  <!-- be sure it's full screen -->
-    <preference name="Orientation" value="landscape" /> <!-- force landscape -->
+    <!-- <preference name="Orientation" value="landscape" /> --> <!-- force landscape -->
     <preference name="HideKeyboardFormAccessoryBar" value="true"/> <!-- Android/blackberry, hide keyboard input nav bar-->
 
     <icon src="../icons/default.png" /> <!-- default icon (we start from Cordova project) -->
