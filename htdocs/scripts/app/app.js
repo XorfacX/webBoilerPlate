@@ -1,5 +1,5 @@
 /**@license
- * Copyright (c) 2013-2016, XorfacX - FairyDwarves
+ * Copyright (c) 2013-2018, XorfacX - FairyDwarves
  * Please report to LICENSE.md file.
  */
 
