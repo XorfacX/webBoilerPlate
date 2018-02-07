@@ -84,12 +84,12 @@ require([
                                         }),
                                         lang.hitch(this, function (err) {
                                             console.log("Music Error: code " + err.code + (typeof err.msg != "undefined" ? ', msg: ' + err.msg : ''));
-                                            this.release();
+                                            this._musicMedia.release();
                                         }),
                                         lang.hitch(this, function (status) {
                                             this._musicStatus = status;
                                             if (status === Media.MEDIA_STOPPED) { //LOOP the music
-                                                this.play();
+                                                this._musicMedia.play();
                                             }
                                         })
                                     );
