@@ -400,7 +400,7 @@ def build(bld):
         
         #static files
         statics = ['images/**/*.png', 'images/**/*.gif', 'images/**/*.jpg', 'images/**/*.jpeg', 'images/**/*.svg',
-                   'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/.htaccess',
+                   'fonts/*.otf', 'fonts/*.ttf', 'fonts/*.svg', 'fonts/*.eot', 'fonts/*.txt', 'fonts/*.woff', 'fonts/.htaccess',
                    'content/**/*', 'scripts/*.json',
                    'audio/**/*.ogg', 'audio/**/*.mp3', 'audio/**/*.wav', 'audio/**/*.aac',
                    '*.html', '*.txt', '*.php', '*.md', '*.php5', '*.asp', '.htaccess', '*.ico',
@@ -454,7 +454,7 @@ def build(bld):
         
         #add cordova plugins
         def cordovaAddPlugins_task(task):
-            cordova_plugin_proc = subprocess.Popen("cordova plugin add cordova-plugin-media@latest",
+            cordova_plugin_proc = subprocess.Popen('cordova plugin add https://github.com/FairyDwarves/cordova-plugin-media',
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -493,7 +493,7 @@ def build(bld):
 
         #define a cordova platform update task
         def cordovaplatformupdate_task(task):
-            cordovaplatformupdate_proc = subprocess.Popen("cordova platform update " + bld.env.PLATFORM + "@latest",
+            cordovaplatformupdate_proc = subprocess.Popen("cordova platform update " + bld.env.PLATFORM,
                 cwd=cordova_proj_node.relpath(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -612,14 +612,22 @@ def build(bld):
         bld(rule = cordovaAddPlugins_task,
             always = True,
             name = "CordovaAddPlugins_task",
-            before = "androbuild_task",
+            before = "CopyBuildExtrasGradle_task",
             after = "CordovaPlatformUpdate_task")
+            
+        bld(rule = cp_task,
+            source=platform_pub_node.find_node("build-extras.gradle").get_src(), #from publish/build-extras.gradle  ...
+            target=cordova_proj_node.find_dir("platforms/android").make_node("build-extras.gradle"), #... to publish/android/Poker Study/platforms/android/build-extras.gradle
+            always = True,
+            name = "CopyBuildExtrasGradle_task",
+            before = "androbuild_task",
+            after = "CordovaAddPlugins_task")
 
         bld(rule = androbuild_task,
             source = cordova_proj_node.make_node("config.xml"),
             always = True,
             name = "androbuild_task",
-            after = "CordovaAddPlugins_task")
+            after = "CopyBuildExtrasGradle_task")
     #END ANDROID PLATFORM
 
     elif bld.env.PLATFORM == 'chrome' :
