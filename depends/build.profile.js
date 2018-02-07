@@ -34,7 +34,7 @@ var profile = (function () {
             name: "css",
             location: dojoP + "../css"
         }
-        //CONTINUE THE LIST OF YOUR PACKAGE HERE
+        //CONTINUE THE LIST OF YOUR PACKAGES HERE
         ],
 
         layers: {

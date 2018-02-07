@@ -20,7 +20,7 @@ VUNIT_BUGGYFILL = 0 #enable or disable viewport unit buggyfill
 
 
 #> http://dojotoolkit.org/
-DOJO_VERSION = "1.10.4"  #TODO UPDATE
+DOJO_VERSION = "1.13.0"  #TODO UPDATE
 DOJO_URL = "http://download.dojotoolkit.org/release-" + DOJO_VERSION + "/dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_FILENAME = "dojo-release-" + DOJO_VERSION + "-src.zip"
 DOJO_UNZIP = "dojo-release-" + DOJO_VERSION + "-src"
